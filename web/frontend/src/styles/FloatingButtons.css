@@ -1,0 +1,76 @@
+.floating-buttons {
+  position: fixed;
+  bottom: 12px;
+  right: 20px;
+  display: flex;
+  flex-direction: row;
+  gap: 30px;
+}
+
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+
+
+.disabled-group {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.icon-outside {
+  width: 40px;
+  height: 40px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.icon-outside img {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-add,
+.icon-save {
+  background-color: #074A82;
+}
+
+.icon-delete,
+.icon-reset {
+  background-color: #707070;
+}
+
+.btn-text {
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 3px;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn-add-text,
+.btn-save-text {
+  background-color: #ffffff;
+  border: 1px solid #074A82;
+  color: #074A82;
+}
+
+.btn-delete-text,
+.btn-reset-text {
+  background-color: #B7B7B7;
+  border: none;
+  color: #707070;
+}
