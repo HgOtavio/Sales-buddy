@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView; // Não esqueça de importar o ImageView
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -16,6 +17,7 @@ public class registersalesActivity extends AppCompatActivity {
 
     private EditText etNome, etCpf, etEmail, etItem, etValorVenda, etValorRecebido;
     private Button btnFinalizar;
+    private ImageView btnMenu, btnBack; // Variável para o botão de voltar
     private int usuarioId;
 
     @Override
@@ -39,6 +41,16 @@ public class registersalesActivity extends AppCompatActivity {
         etValorVenda = findViewById(R.id.etValorVenda);
         etValorRecebido = findViewById(R.id.etValorRecebido);
         btnFinalizar = findViewById(R.id.btnFinalizar);
+
+        btnMenu = findViewById(R.id.btn_menu);
+        btnBack = findViewById(R.id.btn_back);
+
+        btnBack.setOnClickListener(v -> {finish();});
+
+        btnMenu.setOnClickListener(v -> {
+            MenuBottomSheet menu = MenuBottomSheet.newInstance(usuarioId, true);
+            menu.show(getSupportFragmentManager(), "MenuTopSheet");
+        });
 
         btnFinalizar.setOnClickListener(v -> {
             String nome = etNome.getText().toString();

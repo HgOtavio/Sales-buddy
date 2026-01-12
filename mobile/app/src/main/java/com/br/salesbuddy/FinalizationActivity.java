@@ -16,9 +16,9 @@ import java.util.Random;
 public class FinalizationActivity extends AppCompatActivity {
 
     private TextView tvNome, tvCpf, tvEmail, tvItem, tvTotal, tvPago, tvTroco, tvVendaId;
-    private Button btnSim, btnNao;
+    private Button btnSim, btnNao, btnMenu, btnBack;
 
-    // Dados para compartilhamento
+    private int usuarioId;
     private String nome, cpf, email, item;
     private double valorVenda, valorRecebido, troco;
 
@@ -34,7 +34,6 @@ public class FinalizationActivity extends AppCompatActivity {
             return insets;
         });
 
-        // 1. Vínculo com os IDs novos do XML
         tvNome = findViewById(R.id.tvResumoNome);
         tvCpf = findViewById(R.id.tvResumoCpf);
         tvEmail = findViewById(R.id.tvResumoEmail);
@@ -43,11 +42,18 @@ public class FinalizationActivity extends AppCompatActivity {
         tvPago = findViewById(R.id.tvResumoRecebido);
         tvTroco = findViewById(R.id.tvResumoTroco);
         tvVendaId = findViewById(R.id.tvVendaId);
+
         btnSim = findViewById(R.id.btnSim);
         btnNao = findViewById(R.id.btnNao);
+        btnMenu = findViewById(R.id.btn_menu);
+        btnBack = findViewById(R.id.btn_back);
+
+        btnBack.setOnClickListener(v -> finish());
 
         Bundle extras = getIntent().getExtras();
         if(extras != null) {
+            usuarioId = extras.getInt("ID_DO_LOJISTA", -1);
+
             nome = extras.getString("NOME", "-");
             cpf = extras.getString("CPF", "-");
             email = extras.getString("EMAIL", "-");
@@ -71,8 +77,18 @@ public class FinalizationActivity extends AppCompatActivity {
             tvVendaId.setText("Venda n° " + numeroVenda);
         }
 
+        btnMenu.setOnClickListener(v -> {
+            MenuBottomSheet menu = MenuBottomSheet.newInstance(usuarioId, false);
+            menu.show(getSupportFragmentManager(), "MenuBottomSheet");
+        });
+
         btnNao.setOnClickListener(v -> {
+
             Intent intent = new Intent(FinalizationActivity.this, registersalesActivity.class);
+
+            // Passamos o ID de volta para o registro saber quem é o usuário
+            intent.putExtra("ID_DO_LOJISTA", usuarioId);
+
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             finish();

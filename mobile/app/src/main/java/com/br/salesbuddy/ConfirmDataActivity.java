@@ -25,7 +25,7 @@ public class ConfirmDataActivity extends AppCompatActivity {
 
     // Componentes da Interface
     private TextView tvNome, tvCpf, tvEmail, tvItem, tvValor, tvRecebido, tvTroco;
-    private Button btnConfirmar;
+    private Button btnConfirmar, btnMenu;
     private ImageView btnBack;
 
     // Variáveis para armazenar os dados recebidos
@@ -57,6 +57,8 @@ public class ConfirmDataActivity extends AppCompatActivity {
 
         btnConfirmar = findViewById(R.id.btnConfirmarEnvio);
         btnBack = findViewById(R.id.btn_back);
+        btnMenu = findViewById(R.id.btn_menu);
+
 
         recuperarDadosDaIntent();
 
@@ -67,6 +69,11 @@ public class ConfirmDataActivity extends AppCompatActivity {
         btnConfirmar.setOnClickListener(v -> {
             new Thread(this::enviarParaBackend).start();
         });
+        btnMenu.setOnClickListener(v -> {
+            MenuBottomSheet menu = MenuBottomSheet.newInstance(usuarioId, false);
+            menu.show(getSupportFragmentManager(), "MenuBottomSheet");
+        });
+
     }
 
     private void recuperarDadosDaIntent() {
@@ -101,6 +108,8 @@ public class ConfirmDataActivity extends AppCompatActivity {
 
         tvValor.setText(String.format("R$ %.2f", valorVenda));
         tvRecebido.setText(String.format("R$ %.2f", valorRecebido));
+
+
 
         double troco = valorRecebido - valorVenda;
         if (troco < 0) troco = 0.0;

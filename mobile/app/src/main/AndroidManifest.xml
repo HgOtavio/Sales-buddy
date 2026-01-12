@@ -10,28 +10,40 @@
         android:label="@string/app_name"
         android:theme="@style/Theme.SalesBuddy"
         android:usesCleartextTraffic="true">
-
-        <activity android:name=".reprocessingAcitivity" android:exported="false" />
-        <activity android:name=".FinalizationActivity" android:exported="false" />
-        <activity android:name=".ConfirmDataActivity" android:exported="false" />
-        <activity android:name=".registersalesActivity" android:exported="false" />
-        <activity android:name=".HomeActivity" android:exported="false" />
-        <activity android:name=".authenticationActivity" android:exported="false" />
+        <activity
+            android:name=".MenuBottomSheet"
+            android:exported="false" />
+        <activity
+            android:name=".reprocessingAcitivity"
+            android:exported="false" />
+        <activity
+            android:name=".FinalizationActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ConfirmDataActivity"
+            android:exported="false" />
+        <activity
+            android:name=".registersalesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".HomeActivity"
+            android:exported="false" />
+        <activity
+            android:name=".authenticationActivity"
+            android:exported="false" />
         <activity android:name=".salesActivity" />
-
         <activity
             android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".MainActivity"
             android:exported="false" />
-
     </application>
 
 </manifest>
