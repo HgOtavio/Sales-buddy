@@ -1,11 +1,9 @@
 import { useState } from "react";
 import "../styles/dashboard.css";
 
-// Hooks
 import { useUsers } from "../hooks/useUsers";
-import { useFloatingActions } from "../hooks/useFloatingActions"; // Importe o novo hook
+import { useFloatingActions } from "../hooks/useFloatingActions"; 
 
-// Componentes
 import { UsersTable } from "../components/UsersTable";
 import { SalesTable } from "../components/SalesTable"; 
 import { AddUserForm } from "../components/AddUserForm"; 
@@ -13,7 +11,6 @@ import { SidebarItem } from "../components/SidebarItem";
 import { FloatingButtons } from "../components/FloatingButtons";
 import { ConfirmationModal } from "../components/ConfirmationModal";
 
-// Assets
 import logo from "../assets/logo.svg";
 import background from "../assets/background.png";
 import usersIcon from "../assets/icon-users.svg";
@@ -23,7 +20,12 @@ import usersIconBlue from "../assets/icon-users-blue.svg";
 import salesIconBlue from "../assets/icon-sales-blue.svg";
 
 export default function Dashboard() {
-  const [active, setActive] = useState("usuarios");
+  // --- Estados da Tela ---
+  const [active, setActive] = useState("usuarios"); // Controla qual aba está visível
+  const [editingUser, setEditingUser] = useState(null); // Guarda usuário sendo editado
+  const [receiptUrl, setReceiptUrl] = useState(null); // Guarda a URL do comprovante (null = modal fechado)
+
+  // --- Hooks Customizados ---
   const { 
     users, 
     selectedIds, 
@@ -32,7 +34,7 @@ export default function Dashboard() {
     toggleSelection, 
     requestDelete, 
     confirmDelete, 
-    cancelDelete 
+    cancelDelete
   } = useUsers();
 
   const { 
@@ -41,9 +43,36 @@ export default function Dashboard() {
     handleResetPassword 
   } = useFloatingActions(setActive);
 
+  // --- Funções de Controle ---
+
+  const handleEditUser = (user) => {
+    setEditingUser(user); 
+    setActive("cadastro"); 
+  };
+
+  const handleOpenNewUser = () => {
+    setEditingUser(null); 
+    handleGoToAdd(); 
+  };
+
+  // Função chamada pela SalesTable quando clica no ícone
+  const handleViewReceipt = (url) => {
+    setReceiptUrl(url); // Isso faz o modal abrir
+  };
+
+  const handleFormSubmit = (formData) => {
+    if (editingUser) {
+        // Lógica de editar
+    } else {
+        // Lógica de criar
+    }
+    setActive("usuarios"); 
+  };
+
   return (
     <div className="dashboard" style={{ backgroundImage: `url(${background})` }}>
       
+      {/* Barra Lateral */}
       <aside className="sidebar">
         <img src={logo} className="sidebar-logo" alt="Logo" />
         
@@ -71,6 +100,7 @@ export default function Dashboard() {
         />
       </aside>
 
+      {/* Conteúdo Principal */}
       <main className="content">
         <div className="table-container">
           
@@ -78,34 +108,59 @@ export default function Dashboard() {
             <UsersTable 
               users={users} 
               selectedIds={selectedIds} 
-              onSelect={toggleSelection} 
+              onSelect={toggleSelection}
+              onEdit={handleEditUser} 
             />
           )}
 
-          {active === "vendas" && <SalesTable />}
+          {active === "vendas" && (
+            <SalesTable 
+              onViewReceipt={handleViewReceipt} // Passa a função para o filho
+            />
+          )}
 
-          {active === "cadastro" && <AddUserForm />}
+          {active === "cadastro" && (
+            <AddUserForm 
+                userToEdit={editingUser} 
+                onSubmit={handleFormSubmit}
+                onCancel={() => setActive("usuarios")}
+            />
+          )}
 
         </div>
+
+        {/* Botões Flutuantes */}
         <FloatingButtons 
           activeTab={active} 
-          
           onDelete={requestDelete}
           disabled={selectedIds.length === 0}
-          
-          onAdd={handleGoToAdd}
+          onAdd={handleOpenNewUser}
           onSave={handleSave}
           onReset={handleResetPassword} 
+          isEditing={!!editingUser}
         />
+        
+      </main>
 
-        <ConfirmationModal 
+      {/* --- MODAIS (Fora do Main para garantir o z-index correto) --- */}
+      
+      {/* Modal de Exclusão */}
+      <ConfirmationModal 
           isOpen={isModalOpen}
           onClose={cancelDelete}
           onConfirm={confirmDelete}
           userName={selectedNames} 
-        />
-        
-      </main>
+          variant="delete" 
+      />
+
+      {/* Modal de Comprovante */}
+      <ConfirmationModal 
+          isOpen={!!receiptUrl} // Abre se tiver URL
+          onClose={() => setReceiptUrl(null)} // Fecha limpando a URL
+          variant="receipt"
+          receiptImageSrc={receiptUrl}
+      />
+
     </div>
   );
 }

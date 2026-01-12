@@ -1,4 +1,3 @@
-html,
 body,
 #root {
   width: 100%;
@@ -34,25 +33,33 @@ body,
 .menu-item {
   width: 100%;
   padding: 14px 24px;
+  padding-left: 40px;
   display: flex;
   align-items: center;
   gap: 12px;
   color: #a32c65;
-  font-family: "Montserrat", sans-serif;
   font-size: 15px;
   cursor: pointer;
   box-sizing: border-box;
-  padding-left: 40px;
+  transition: color 0.25s ease, font-size 0.25s ease;
 }
 
 .menu-item img {
   width: 20px;
 }
 
+.menu-item span {
+  transition: color 0.25s ease, font-size 0.25s ease;
+}
+
 .menu-item.active {
+  background: transparent;
+}
+
+.menu-item.active span {
   color: #074a82;
+  font-size: 17px;
   font-weight: 700;
-  background-color: #f7f7f7;
 }
 
 .content {
@@ -72,3 +79,4 @@ body,
   border-radius: 14px;
   padding: 24px;
 }
+  

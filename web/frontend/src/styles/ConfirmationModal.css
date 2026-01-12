@@ -4,30 +4,80 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
+  
+  background: rgba(0, 0, 0, 0.6);
+  
+  /* Compatibilidade Safari/Chrome */
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  
+  z-index: 2147483647 !important; 
 }
 
+/* --- Estilo Padrão da Caixa (Delete) --- */
 .modal-box {
   background: white;
-  padding: 30px;
+  padding: 30px; /* Padding padrão para o modo delete */
   border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   text-align: center;
   width: 350px;
   font-family: "Montserrat", sans-serif;
+  max-height: 90vh; 
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 2147483648; 
 }
+
+/* --- AJUSTES ESPECÍFICOS PARA O MODO COMPROVANTE --- */
+.modal-box.receipt-mode {
+  width: 400px; /* Um pouco mais largo para o papel */
+  padding: 0;   /* REMOVE o padding branco ao redor da imagem */
+  background: white;
+  overflow: hidden; /* Garante que a imagem siga o border-radius */
+}
+
+/* Conteúdo da Imagem (Sem fundo cinza, sem margem) */
+.receipt-content {
+  background: transparent; /* Remove o cinza */
+  padding: 0;              /* Remove o espaçamento interno */
+  margin: 0;               /* Remove margem */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.receipt-content img {
+  width: 100%;
+  height: auto;
+  max-height: 70vh; /* Limita a altura para não estourar a tela */
+  object-fit: contain;
+  display: block;
+}
+
+/* Área dos botões dentro do comprovante precisa de padding, 
+   já que tiramos do container principal */
+.modal-box.receipt-mode .modal-actions {
+  padding: 15px;
+  background-color: white; /* Garante fundo branco nos botões */
+  border-top: 1px solid #eee; /* Uma linha sutil separando a imagem dos botões */
+}
+
+/* --- Fim dos ajustes do comprovante --- */
 
 .modal-box h3 {
   margin-top: 0;
-  color: #A32C2C; 
-  margin-bottom: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  text-align: left; 
+  color: #074A82; 
+  margin-bottom: 15px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center; 
 }
 
 .modal-box p {
@@ -36,8 +86,6 @@
   font-size: 14px;
   line-height: 1.6;
   white-space: pre-line; 
-  
- 
   word-break: break-word; 
   text-align: left; 
 }
@@ -46,21 +94,19 @@
   font-weight: 700;
   display: block;
   margin-top: 8px;
-  
   color: #A32C2C; 
 }
 
 .modal-actions {
   display: flex;
   justify-content: center;
-  gap: 15px;
+  gap: 10px;
+  margin-top: auto;
 }
 
 .btn-modal {
-  padding: 12px 0; 
-  
-  width: 140px; 
-  
+  padding: 10px 0; 
+  flex: 1;
   border: none;
   border-radius: 5px;
   font-family: "Montserrat", sans-serif;
@@ -68,6 +114,7 @@
   color: white;
   cursor: pointer;
   transition: opacity 0.2s;
+  font-size: 13px;
 }
 
 .btn-modal:hover {
@@ -75,9 +122,13 @@
 }
 
 .btn-green {
-  background-color:#408140; 
+  background-color: #074A82; 
 }
 
 .btn-red {
-  background-color :#A32C2C; 
+  background-color: #A32C2C; 
+}
+
+.btn-blue {
+  background-color: #074A82;
 }

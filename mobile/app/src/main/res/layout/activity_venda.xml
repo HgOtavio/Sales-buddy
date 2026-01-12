@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="NOVA VENDA"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="20dp"/>
+
+        <EditText
+            android:id="@+id/etNomeCliente"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nome do Cliente" />
+
+        <EditText
+            android:id="@+id/etCpf"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="CPF (000.000.000-00)"
+            android:inputType="number" />
+
+        <EditText
+            android:id="@+id/etEmailCliente"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Email do Cliente"
+            android:inputType="textEmailAddress" />
+
+        <EditText
+            android:id="@+id/etValorVenda"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Valor Total da Venda (R$)"
+            android:inputType="numberDecimal"
+            android:layout_marginTop="20dp"/>
+
+        <EditText
+            android:id="@+id/etValorRecebido"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Valor Recebido (Dinheiro/Pix)"
+            android:inputType="numberDecimal" />
+
+        <Button
+            android:id="@+id/btnFinalizar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="FINALIZAR E REGISTRAR"
+            android:backgroundTint="#009688"
+            android:layout_marginTop="30dp"
+            android:height="60dp"/>
+
+    </LinearLayout>
+</ScrollView>

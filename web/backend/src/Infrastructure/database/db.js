@@ -1,60 +1,57 @@
-const sqlite3 = require('sqlite3').verbose();
+const { Sequelize, DataTypes } = require('sequelize');
 
-const db = new sqlite3.Database('./db.', (err) => {
-    if (err) {
-        console.error(err.message);
+// 1. Conexão usando as variáveis do .env
+const sequelize = new Sequelize(
+    process.env.DB_NAME,     // salesbuddy_db
+    process.env.DB_USER,     // admin
+    process.env.DB_PASS,     // password123
+    {
+        host: process.env.DB_HOST,       // localhost
+        dialect: process.env.DB_DIALECT, // postgres
+        logging: false
     }
-    console.log('SQLite connected');
+);
+
+// 2. Modelo USUÁRIO
+const Usuario = sequelize.define('Usuario', {
+    nome: { type: DataTypes.STRING, allowNull: false },
+    empresa: { type: DataTypes.STRING, allowNull: false },
+    email: { type: DataTypes.STRING, allowNull: false, unique: true },
+    cnpj: { type: DataTypes.STRING, allowNull: false },
+    senha: { type: DataTypes.STRING, allowNull: false }
 });
 
-db.run('PRAGMA foreign_keys = ON');
-
-db.serialize(() => {
-
-    // People
-    db.run(`
-        CREATE TABLE IF NOT EXISTS people (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            cpf TEXT NOT NULL UNIQUE,
-            email TEXT NOT NULL UNIQUE
-        )
-    `);
-
-    // Items
-    db.run(`
-        CREATE TABLE IF NOT EXISTS items (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            price REAL NOT NULL
-        )
-    `);
-
-    // Sales
-    db.run(`
-        CREATE TABLE IF NOT EXISTS sales (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            person_id INTEGER NOT NULL,
-            sale_date TEXT DEFAULT CURRENT_TIMESTAMP,
-            total_value REAL NOT NULL,
-            received_value REAL NOT NULL,
-            change_value REAL NOT NULL,
-            FOREIGN KEY (person_id) REFERENCES people(id)
-        )
-    `);
-
-    // Sale Items (quantidade aqui)
-    db.run(`
-        CREATE TABLE IF NOT EXISTS sale_items (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            sale_id INTEGER NOT NULL,
-            item_id INTEGER NOT NULL,
-            quantity INTEGER NOT NULL,
-            unit_price REAL NOT NULL,
-            FOREIGN KEY (sale_id) REFERENCES sales(id),
-            FOREIGN KEY (item_id) REFERENCES items(id)
-        )
-    `);
+// 3. Modelo VENDA
+const Venda = sequelize.define('Venda', {
+    nome_cliente: { type: DataTypes.STRING, allowNull: false },
+    cpf_cliente: { type: DataTypes.STRING },
+    email_cliente: { type: DataTypes.STRING },
+    valor_venda: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+    valor_recebido: { type: DataTypes.DECIMAL(10, 2), allowNull: false }
 });
 
-module.exports = db;
+// 4. Modelo ITEM
+const Item = sequelize.define('Item', {
+    nome: { type: DataTypes.STRING, allowNull: false },
+    valor: { type: DataTypes.DECIMAL(10, 2), allowNull: false }
+});
+
+// 5. RELACIONAMENTOS
+Usuario.hasMany(Venda);
+Venda.belongsTo(Usuario);
+
+Venda.hasMany(Item);
+Item.belongsTo(Venda);
+
+// 6. Conexão
+const conectarBanco = async () => {
+    try {
+        await sequelize.authenticate();
+        await sequelize.sync({ alter: true }); 
+        console.log("✅ Banco conectado via .env e tabelas atualizadas!");
+    } catch (error) {
+        console.error("❌ Erro ao conectar:", error);
+    }
+};
+
+module.exports = { Usuario, Venda, Item, conectarBanco };
