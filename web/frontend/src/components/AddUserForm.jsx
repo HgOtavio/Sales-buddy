@@ -13,7 +13,6 @@ export function AddUserForm({ userToEdit, onSubmit, onCancel }) {
     cnpj: ""
   });
 
-  // Efeito: Sempre que 'userToEdit' mudar, atualiza o formulário
   useEffect(() => {
     if (userToEdit) {
       setFormData({

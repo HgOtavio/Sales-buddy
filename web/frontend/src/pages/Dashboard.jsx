@@ -115,7 +115,7 @@ export default function Dashboard() {
 
           {active === "vendas" && (
             <SalesTable 
-              onViewReceipt={handleViewReceipt} // Passa a função para o filho
+              onViewReceipt={handleViewReceipt} 
             />
           )}
 
@@ -141,8 +141,6 @@ export default function Dashboard() {
         />
         
       </main>
-
-      {/* --- MODAIS (Fora do Main para garantir o z-index correto) --- */}
       
       {/* Modal de Exclusão */}
       <ConfirmationModal 

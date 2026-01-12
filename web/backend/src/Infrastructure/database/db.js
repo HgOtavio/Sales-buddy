@@ -1,6 +1,6 @@
 const { Sequelize, DataTypes } = require('sequelize');
 
-// 1. Conexão usando as variáveis do .env
+// Conexão usando as variáveis do .env
 const sequelize = new Sequelize(
     process.env.DB_NAME,     // salesbuddy_db
     process.env.DB_USER,     // admin
@@ -12,7 +12,7 @@ const sequelize = new Sequelize(
     }
 );
 
-// 2. Modelo USUÁRIO
+// Modelo USUÁRIO
 const Usuario = sequelize.define('Usuario', {
     nome: { type: DataTypes.STRING, allowNull: false },
     empresa: { type: DataTypes.STRING, allowNull: false },
@@ -21,7 +21,7 @@ const Usuario = sequelize.define('Usuario', {
     senha: { type: DataTypes.STRING, allowNull: false }
 });
 
-// 3. Modelo VENDA
+//  Modelo VENDA
 const Venda = sequelize.define('Venda', {
     nome_cliente: { type: DataTypes.STRING, allowNull: false },
     cpf_cliente: { type: DataTypes.STRING },
@@ -30,27 +30,27 @@ const Venda = sequelize.define('Venda', {
     valor_recebido: { type: DataTypes.DECIMAL(10, 2), allowNull: false }
 });
 
-// 4. Modelo ITEM
+//  Modelo ITEM
 const Item = sequelize.define('Item', {
     nome: { type: DataTypes.STRING, allowNull: false },
     valor: { type: DataTypes.DECIMAL(10, 2), allowNull: false }
 });
 
-// 5. RELACIONAMENTOS
+//  RELACIONAMENTOS
 Usuario.hasMany(Venda);
 Venda.belongsTo(Usuario);
 
 Venda.hasMany(Item);
 Item.belongsTo(Venda);
 
-// 6. Conexão
+//  Conexão
 const conectarBanco = async () => {
     try {
         await sequelize.authenticate();
         await sequelize.sync({ alter: true }); 
-        console.log("✅ Banco conectado via .env e tabelas atualizadas!");
+        console.log(" Banco conectado via .env e tabelas atualizadas!");
     } catch (error) {
-        console.error("❌ Erro ao conectar:", error);
+        console.error(" Erro ao conectar:", error);
     }
 };
 

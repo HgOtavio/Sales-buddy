@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Sales-Buddy</string>
+    <string name="app_name">Sales Buddy</string>
+    <string name="version_text"><b>Version</b> 1.0.0</string>
 </resources>

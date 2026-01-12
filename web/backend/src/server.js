@@ -46,7 +46,7 @@ app.post('/vendas', async (req, res) => {
             valor_venda, valor_recebido, itens 
         } = req.body;
         
-        console.log(`💰 Nova venda para: ${nome_cliente} - R$ ${valor_venda}`);
+        console.log(` Nova venda para: ${nome_cliente} - R$ ${valor_venda}`);
 
         // 1. Cria a Venda
         const novaVenda = await Venda.create({
@@ -91,6 +91,6 @@ app.get('/dashboard/:usuarioId', async (req, res) => {
 // Inicia o servidor usando a porta do .env ou 3001
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-    console.log(`🚀 Server rodando na porta ${PORT}`);
+    console.log(`Server rodando na porta ${PORT}`);
     conectarBanco();
 });

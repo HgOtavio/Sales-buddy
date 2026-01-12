@@ -2,7 +2,6 @@ package com.br.salesbuddy;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -13,16 +12,15 @@ import java.io.DataOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class VendaActivity extends AppCompatActivity {
+public class salesActivity extends AppCompatActivity {
 
-    // Componentes da tela
     EditText etNome, etCpf, etEmail, etValorVenda, etValorRecebido;
     Button btnFinalizar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_venda); // Ou activity_main se usou o main
+        setContentView(R.layout.activity_sales);
 
         // 1. Vincular com o XML
         etNome = findViewById(R.id.etNomeCliente);
@@ -32,9 +30,7 @@ public class VendaActivity extends AppCompatActivity {
         etValorRecebido = findViewById(R.id.etValorRecebido);
         btnFinalizar = findViewById(R.id.btnFinalizar);
 
-        // 2. Ação do Botão
         btnFinalizar.setOnClickListener(v -> {
-            // Pega os textos digitados
             String nome = etNome.getText().toString();
             String cpf = etCpf.getText().toString();
             String email = etEmail.getText().toString();
@@ -53,7 +49,6 @@ public class VendaActivity extends AppCompatActivity {
 
     private void registrarVendaNoBackend(String nome, String cpf, String email, String valVenda, String valRecebido) {
         try {
-            // SEU ENDEREÇO LOCALHOST PARA O ANDROID
             URL url = new URL("http://10.0.2.2:3001/vendas");
 
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -61,18 +56,15 @@ public class VendaActivity extends AppCompatActivity {
             conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
             conn.setDoOutput(true);
 
-            // --- MONTANDO O JSON DA VENDA ---
             JSONObject jsonVenda = new JSONObject();
-            jsonVenda.put("usuarioId", 1); // ID do Lojista (Hugo) fixo por enquanto
+            jsonVenda.put("usuarioId", 1);
             jsonVenda.put("nome_cliente", nome);
             jsonVenda.put("cpf_cliente", cpf);
             jsonVenda.put("email_cliente", email);
 
-            // Converte String para Double (para o banco aceitar números)
             jsonVenda.put("valor_venda", Double.parseDouble(valVenda.replace(",", ".")));
             jsonVenda.put("valor_recebido", Double.parseDouble(valRecebido.replace(",", ".")));
 
-            // --- SIMULANDO ITENS (Já que não temos tela de carrinho ainda) ---
             JSONArray arrayItens = new JSONArray();
 
             JSONObject item1 = new JSONObject();
@@ -83,7 +75,7 @@ public class VendaActivity extends AppCompatActivity {
             arrayItens.put(item1);
             jsonVenda.put("itens", arrayItens);
 
-            // --- ENVIANDO ---
+            //  ENVIANDO
             Log.d("SalesBuddy", "Enviando JSON: " + jsonVenda.toString());
 
             DataOutputStream os = new DataOutputStream(conn.getOutputStream());
@@ -91,16 +83,16 @@ public class VendaActivity extends AppCompatActivity {
             os.flush();
             os.close();
 
-            // --- RESPOSTA ---
+            //  RESPOSTA
             int codigo = conn.getResponseCode();
             if (codigo == 200) {
                 runOnUiThread(() -> {
-                    Toast.makeText(VendaActivity.this, "✅ VENDA REGISTRADA!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(salesActivity.this, " VENDA REGISTRADA!", Toast.LENGTH_LONG).show();
                     limparCampos();
                 });
             } else {
                 Log.e("SalesBuddy", "Erro Backend: " + codigo);
-                runOnUiThread(() -> Toast.makeText(VendaActivity.this, "Erro ao registrar venda.", Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> Toast.makeText(salesActivity.this, "Erro ao registrar venda.", Toast.LENGTH_LONG).show());
             }
 
             conn.disconnect();
