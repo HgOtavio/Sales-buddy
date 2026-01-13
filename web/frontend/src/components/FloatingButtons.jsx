@@ -4,7 +4,7 @@ import iconTrash from "../assets/icon-delete.svg";
 import iconCheck from "../assets/icon-check.svg";
 import iconKey from "../assets/icon-key.svg"; 
 
-export function FloatingButtons({ activeTab, onDelete, onAdd, onSave, onReset, disabled, isEditing }) {
+export function FloatingButtons({ activeTab, onDelete, onAdd, onReset, disabled, isEditing, formId }) {
   
   if (activeTab === "cadastro") {
     return (
@@ -14,16 +14,20 @@ export function FloatingButtons({ activeTab, onDelete, onAdd, onSave, onReset, d
           <div className="icon-outside icon-reset">
             <img src={iconKey} alt="Resetar" />
           </div>
-          <button className="btn-text btn-reset-text">
+          <button type="button" className="btn-text btn-reset-text">
             Resetar Senha
           </button>
         </div>
 
-        <div className="action-group" onClick={onSave}>
+        <div className="action-group">
           <div className="icon-outside icon-save">
             <img src={iconCheck} alt="Salvar" />
           </div>
-          <button className="btn-text btn-save-text">
+          <button 
+            type="submit" 
+            form={formId} 
+            className="btn-text btn-save-text"
+          >
             {isEditing ? "Salvar alterações" : "Salvar novo usuário"}
           </button>
         </div>

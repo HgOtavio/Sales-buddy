@@ -64,19 +64,35 @@ body,
 
 .content {
   flex: 1;
-  margin: 30px;
+  margin: 15px;
+  
   background: rgba(255, 255, 255, 0.6);
-  border-radius: 14px;
+  border-radius: 6px;
   padding: 40px;
-  height: calc(100vh - 60px);
+
+  height: calc(100vh - 60px); 
   box-sizing: border-box;
   overflow-y: auto;
+
+  position: relative; 
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .table-container {
   background: transparent;
   box-shadow: none;
   border-radius: 14px;
-  padding: 24px;
-}
   
+  width: 80%;
+  max-width: 89%;
+  
+  margin: 0; 
+  padding: 0;
+}
+
+.add-user-container {
+  width: 100%;
+  max-width: 920px;
+}

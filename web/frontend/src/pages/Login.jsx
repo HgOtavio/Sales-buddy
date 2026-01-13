@@ -1,5 +1,5 @@
 import { useState } from "react";
-import LoginDTO from "../dtos/LoginDTO";
+import { useNavigate } from "react-router-dom";
 import AuthService from "../services/AuthService";
 import "../styles/login.css";
 
@@ -7,19 +7,20 @@ import logo from "../assets/logo.svg";
 import background from "../assets/background.png";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
+  const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
+  
+  const navigate = useNavigate();
 
-  function handleLogin() {
-    const dto = new LoginDTO(email, password);
-    const success = AuthService.login(dto);
-
-    if (!success) {
-      alert("Usuário ou senha inválidos");
-      return;
+  async function handleLogin() {
+    try {
+      await AuthService.login(user, password);
+      navigate("/dashboard"); 
+    } catch (error) {
+      console.error(error);
+      const msg = error.response?.data?.error || "Usuário ou senha inválidos";
+      alert(msg);
     }
-
-    alert("Login mockado com sucesso ");
   }
 
   return (
@@ -27,15 +28,14 @@ export default function Login() {
       className="login-page"
       style={{ backgroundImage: `url(${background})` }}
     >
-      <img src={logo} className="logo" />
-
+      <img src={logo} className="logo" alt="Logo" />
 
       <div className="inputs">
         <input
           type="text"
           placeholder="Usuário"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={user}
+          onChange={(e) => setUser(e.target.value)}
         />
 
         <input

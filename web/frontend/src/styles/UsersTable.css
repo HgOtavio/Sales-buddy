@@ -1,21 +1,59 @@
 table {
-  width: 100%;
+  width: 95%; 
+  margin-left: 1px; 
   border-collapse: collapse;
+  table-layout: fixed; 
 }
 
 thead th {
   color: #707070;
   font-family: "Montserrat", sans-serif;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 400;
   padding-bottom: 16px;
   text-align: left;
+  white-space: nowrap;
 }
 
 tbody td {
-  padding: 14px 0;
+  padding: 12px 0;
   vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px; 
 }
+
+
+th:nth-child(1), td:nth-child(1) {
+  width: 20px;
+}
+
+th:nth-child(2), td:nth-child(2) {
+  width: 20%;
+  padding-right: 15px;
+ 
+}
+
+th:nth-child(3), td:nth-child(3) {
+  width: 22%;
+  padding-right: 15px;
+}
+
+th:nth-child(4), td:nth-child(4) {
+  width: 20%;
+  padding-right: 15px;
+}
+
+th:nth-child(5), td:nth-child(5) {
+  width: 18%;
+}
+
+th:nth-child(6), td:nth-child(6) {
+  width: 30xpx;
+  text-align: right;
+}
+
 
 .td-user {
   color: #074a82;
@@ -29,12 +67,16 @@ tbody td {
 .edit-icon {
   width: 18px;
   cursor: pointer;
+  padding-right: 100%;
 }
+
 
 .status-box {
   width: 16px;
   height: 16px;
-  border: 1px solid #707070;
+  
+  border: 1px solid #B0B0B0; 
+  
   border-radius: 4px;
   background-color: transparent;
   cursor: pointer;

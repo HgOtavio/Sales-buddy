@@ -7,9 +7,9 @@ export function UsersTable({ users, selectedIds, onSelect, onEdit }) {
       <thead>
         <tr>
           <th></th>
-          <th>Usuário</th>
-          <th>Nome</th>
-          <th>Empresa</th>
+          <th>USUÁRIO</th>
+          <th>NOME</th>
+          <th>EMPRESA</th>
           <th>CNPJ</th>
           <th></th>
         </tr>
@@ -25,12 +25,11 @@ export function UsersTable({ users, selectedIds, onSelect, onEdit }) {
                   onClick={() => onSelect(u.id)}
                 ></div>
               </td>
-              <td className="td-user">{u.usuario}</td>
-              <td className="td-data">{u.nome}</td>
-              <td className="td-data">{u.empresa}</td>
-              <td className="td-data">{u.cnpj}</td>
+              <td className="td-user">{u.user}</td>    
+              <td className="td-data">{u.name}</td>     
+              <td className="td-data">{u.company}</td>  
+              <td className="td-data">{u.taxId}</td>    
               <td>
-                
                 <img 
                   src={editIcon} 
                   className="edit-icon" 

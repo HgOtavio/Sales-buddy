@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; 
+import { useNavigate } from "react-router-dom";
 import "../styles/dashboard.css";
 
 import { useUsers } from "../hooks/useUsers";
 import { useFloatingActions } from "../hooks/useFloatingActions"; 
+
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import { UsersTable } from "../components/UsersTable";
 import { SalesTable } from "../components/SalesTable"; 
@@ -12,38 +16,50 @@ import { FloatingButtons } from "../components/FloatingButtons";
 import { ConfirmationModal } from "../components/ConfirmationModal";
 
 import logo from "../assets/logo.svg";
-import background from "../assets/background.png";
 import usersIcon from "../assets/icon-users.svg";
 import salesIcon from "../assets/icon-sales.svg";
 import logoutIcon from "../assets/icon-logout.svg";
 import usersIconBlue from "../assets/icon-users-blue.svg";
 import salesIconBlue from "../assets/icon-sales-blue.svg";
+import background from "../assets/background.png";
 
 export default function Dashboard() {
-  // --- Estados da Tela ---
-  const [active, setActive] = useState("usuarios"); // Controla qual aba está visível
-  const [editingUser, setEditingUser] = useState(null); // Guarda usuário sendo editado
-  const [receiptUrl, setReceiptUrl] = useState(null); // Guarda a URL do comprovante (null = modal fechado)
+  const [active, setActive] = useState("usuarios"); 
+  const [editingUser, setEditingUser] = useState(null); 
+  const [receiptUrl, setReceiptUrl] = useState(null); 
+  
+  const navigate = useNavigate();
 
-  // --- Hooks Customizados ---
+  useEffect(() => {
+    const token = localStorage.getItem('salesToken');
+    if (!token) {
+        navigate('/login'); 
+    }
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('salesToken'); 
+    localStorage.removeItem('userData');  
+    navigate('/login');     
+  };
+
   const { 
     users, 
-    selectedIds, 
+    selectedIds,
     selectedNames,
     isModalOpen,
     toggleSelection, 
     requestDelete, 
     confirmDelete, 
-    cancelDelete
+    cancelDelete,
+    refreshUsers 
   } = useUsers();
 
   const { 
     handleGoToAdd, 
-    handleSave, 
+    handleFormSubmit, 
     handleResetPassword 
-  } = useFloatingActions(setActive);
-
-  // --- Funções de Controle ---
+  } = useFloatingActions(setActive, refreshUsers, editingUser);
 
   const handleEditUser = (user) => {
     setEditingUser(user); 
@@ -55,24 +71,12 @@ export default function Dashboard() {
     handleGoToAdd(); 
   };
 
-  // Função chamada pela SalesTable quando clica no ícone
   const handleViewReceipt = (url) => {
-    setReceiptUrl(url); // Isso faz o modal abrir
-  };
-
-  const handleFormSubmit = (formData) => {
-    if (editingUser) {
-        // Lógica de editar
-    } else {
-        // Lógica de criar
-    }
-    setActive("usuarios"); 
+    setReceiptUrl(url); 
   };
 
   return (
-    <div className="dashboard" style={{ backgroundImage: `url(${background})` }}>
-      
-      {/* Barra Lateral */}
+    <div className="dashboard" style={{ backgroundImage: `url(${background})` }}>      
       <aside className="sidebar">
         <img src={logo} className="sidebar-logo" alt="Logo" />
         
@@ -96,11 +100,10 @@ export default function Dashboard() {
           label="Logout"
           icon={logoutIcon}
           isActive={false}
-          onClick={() => alert("Saindo...")} 
+          onClick={handleLogout} 
         />
       </aside>
 
-      {/* Conteúdo Principal */}
       <main className="content">
         <div className="table-container">
           
@@ -114,35 +117,31 @@ export default function Dashboard() {
           )}
 
           {active === "vendas" && (
-            <SalesTable 
-              onViewReceipt={handleViewReceipt} 
-            />
+            <SalesTable onViewReceipt={handleViewReceipt} />
           )}
 
           {active === "cadastro" && (
             <AddUserForm 
                 userToEdit={editingUser} 
-                onSubmit={handleFormSubmit}
-                onCancel={() => setActive("usuarios")}
+                onSubmit={handleFormSubmit} 
+                formId="user-form-id"
             />
           )}
 
         </div>
 
-        {/* Botões Flutuantes */}
         <FloatingButtons 
           activeTab={active} 
           onDelete={requestDelete}
           disabled={selectedIds.length === 0}
           onAdd={handleOpenNewUser}
-          onSave={handleSave}
           onReset={handleResetPassword} 
           isEditing={!!editingUser}
+          formId="user-form-id"
         />
         
       </main>
       
-      {/* Modal de Exclusão */}
       <ConfirmationModal 
           isOpen={isModalOpen}
           onClose={cancelDelete}
@@ -151,12 +150,24 @@ export default function Dashboard() {
           variant="delete" 
       />
 
-      {/* Modal de Comprovante */}
       <ConfirmationModal 
-          isOpen={!!receiptUrl} // Abre se tiver URL
-          onClose={() => setReceiptUrl(null)} // Fecha limpando a URL
+          isOpen={!!receiptUrl} 
+          onClose={() => setReceiptUrl(null)} 
           variant="receipt"
           receiptImageSrc={receiptUrl}
+      />
+
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000} 
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored" 
       />
 
     </div>

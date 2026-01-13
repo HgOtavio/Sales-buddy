@@ -1,33 +1,35 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types"; 
 import "../styles/AddUserForm.css";
 import iconHeader from "../assets/icon-add-blue.svg"; 
 
-// Recebe userToEdit (pode ser null) e onCancel/onSubmit para controle
-export function AddUserForm({ userToEdit, onSubmit, onCancel }) {
-  
-  // Estado inicial do formulário
+export function AddUserForm({ userToEdit, onSubmit, formId }) {
+ 
   const [formData, setFormData] = useState({
-    usuario: "",
-    nome: "",
-    empresa: "",
-    cnpj: ""
+    user: "",    
+    name: "",    
+    company: "", 
+    taxId: "",   
+    email: ""
   });
 
   useEffect(() => {
     if (userToEdit) {
       setFormData({
-        usuario: userToEdit.usuario,
-        nome: userToEdit.nome,
-        empresa: userToEdit.empresa,
-        cnpj: userToEdit.cnpj
+        user: userToEdit.user || "",
+        name: userToEdit.name || "",
+        company: userToEdit.company || "",
+        taxId: userToEdit.taxId || "",
+        email: userToEdit.email || ""
       });
     } else {
-      // Limpa se for cadastro novo
-      setFormData({ usuario: "", nome: "", empresa: "", cnpj: "" });
+      setFormData({ 
+        user: "", 
+        name: "", company: "", 
+        taxId: "", email: "" });
     }
   }, [userToEdit]);
 
-  // Função para lidar com a digitação
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -35,7 +37,6 @@ export function AddUserForm({ userToEdit, onSubmit, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Envia os dados atualizados junto com o ID se for edição
     onSubmit({ ...formData, id: userToEdit?.id }); 
   };
 
@@ -44,63 +45,82 @@ export function AddUserForm({ userToEdit, onSubmit, onCancel }) {
       
       <div className="add-user-header">
         <img src={iconHeader} alt="Icone" className="header-icon" />
-        {/* Título Dinâmico */}
         <h2 className="add-user-title">
-            {userToEdit ? "EDITAR USUÁRIO" : "CADASTRAR NOVO USUÁRIO"}
+            {userToEdit ? "EDITAR DADOS" : "NOVO CADASTRO"}
         </h2>
       </div>
 
-      <form className="add-user-form" onSubmit={handleSubmit}>
+      <form id={formId} className="add-user-form" onSubmit={handleSubmit}>
+        
         <div className="form-group">
-          <label className="form-label">Usuário</label>
+          <label className="form-label">Nome Completo</label>
           <input 
             type="text" 
-            name="usuario" // Importante para o handleChange
+            name="name" 
             className="form-input" 
-            value={formData.usuario} 
+            value={formData.name} 
             onChange={handleChange}
             required 
           />
         </div>
 
         <div className="form-group">
-          <label className="form-label">Nome</label>
+          <label className="form-label">Usuário (Nick)</label>
           <input 
             type="text" 
-            name="nome"
+            name="user" 
             className="form-input" 
-            value={formData.nome} 
+            value={formData.user} 
             onChange={handleChange}
             required 
           />
         </div>
 
         <div className="form-group">
-          <label className="form-label">Empresa</label>
+          <label className="form-label">E-mail</label>
           <input 
-            type="text" 
-            name="empresa"
+            type="email" 
+            name="email"
             className="form-input" 
-            value={formData.empresa} 
+            value={formData.email} 
             onChange={handleChange}
             required 
           />
         </div>
 
-        <div className="form-group">
-          <label className="form-label">CNPJ</label>
-          <input 
-            type="text" 
-            name="cnpj"
-            className="form-input" 
-            value={formData.cnpj} 
-            onChange={handleChange}
-            required 
-          />
-        </div>
+        <div style={{ display: 'flex', gap: '15px' }}>
+            <div className="form-group" style={{ flex: 1 }}>
+                <label className="form-label">Empresa</label>
+                <input 
+                    type="text" 
+                    name="company"
+                    className="form-input" 
+                    value={formData.company} 
+                    onChange={handleChange}
+                    required 
+                />
+            </div>
 
+            <div className="form-group" style={{ flex: 1 }}>
+                <label className="form-label">CNPJ</label>
+                <input 
+                    type="text" 
+                    name="taxId"
+                    className="form-input" 
+                    value={formData.taxId} 
+                    onChange={handleChange}
+                    required 
+                />
+            </div>
+        </div>
         
       </form>
     </div>
   );
 }
+
+AddUserForm.propTypes = {
+  userToEdit: PropTypes.object,
+  onSubmit: PropTypes.func.isRequired,
+  formId: PropTypes.string
+};

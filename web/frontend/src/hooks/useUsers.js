@@ -1,15 +1,34 @@
-import { useState } from "react";
-
-const initialUsers = [
-  { id: 1, usuario: "João", nome: "João Silva", empresa: "Empresa X", cnpj: "12.345.678/0001-90" },
-  { id: 2, usuario: "Maria", nome: "Maria Oliveira", empresa: "Empresa Y", cnpj: "98.765.432/0001-10" },
-  { id: 3, usuario: "Pedro", nome: "Pedro Santos", empresa: "Empresa Z", cnpj: "11.222.333/0001-00" },
-];
+import { useState, useEffect, useCallback } from "react";
+import { toast } from 'react-toastify'; 
+import api from "../services/api";
 
 export function useUsers() {
-  const [users, setUsers] = useState(initialUsers);
+  const [users, setUsers] = useState([]); 
   const [selectedIds, setSelectedIds] = useState([]); 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Busca usuários no 
+  const refreshUsers = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('salesToken');
+      if (!token) return;
+
+      const response = await api.get('/auth/users', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Erro ao carregar usuários:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshUsers();
+  }, [refreshUsers]);
 
   function toggleSelection(id) {
     if (selectedIds.includes(id)) {
@@ -25,10 +44,28 @@ export function useUsers() {
     }
   }
 
-  function confirmDelete() {
-    setUsers((prev) => prev.filter((u) => !selectedIds.includes(u.id)));
-    setSelectedIds([]);
-    setIsModalOpen(false);
+  async function confirmDelete() {
+    try {
+        const token = localStorage.getItem('salesToken');
+        const config = { headers: { Authorization: `Bearer ${token}` } };
+
+       
+        await Promise.all(selectedIds.map(id => 
+            api.delete(`/auth/users/${id}`, config)
+        ));
+
+        toast.success("Usuário(s) excluído(s) com sucesso!");
+        
+        setSelectedIds([]);
+        setIsModalOpen(false);
+        
+        refreshUsers(); 
+
+    } catch (error) {
+        console.error(error);
+        toast.error("Erro ao excluir. Tente novamente.");
+        setIsModalOpen(false);
+    }
   }
 
   function cancelDelete() {
@@ -37,17 +74,19 @@ export function useUsers() {
 
   const selectedNames = users
     .filter((u) => selectedIds.includes(u.id))
-    .map((u) => u.nome)
+    .map((u) => u.name)
     .join("\n");
 
   return {
     users,
+    loading,
     selectedIds,
     selectedNames,
     isModalOpen,
     toggleSelection,
     requestDelete,
     confirmDelete,
-    cancelDelete
+    cancelDelete,
+    refreshUsers 
   };
 }

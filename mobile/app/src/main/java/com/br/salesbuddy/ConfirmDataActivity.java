@@ -23,12 +23,10 @@ import java.net.URL;
 
 public class ConfirmDataActivity extends AppCompatActivity {
 
-    // Componentes da Interface
     private TextView tvNome, tvCpf, tvEmail, tvItem, tvValor, tvRecebido, tvTroco;
     private Button btnConfirmar, btnMenu;
     private ImageView btnBack;
 
-    // Variáveis para armazenar os dados recebidos
     private int usuarioId;
     private String nome, cpf, email, item;
     private double valorVenda, valorRecebido;
@@ -68,7 +66,9 @@ public class ConfirmDataActivity extends AppCompatActivity {
 
         btnConfirmar.setOnClickListener(v -> {
             new Thread(this::enviarParaBackend).start();
+
         });
+
         btnMenu.setOnClickListener(v -> {
             MenuBottomSheet menu = MenuBottomSheet.newInstance(usuarioId, false);
             menu.show(getSupportFragmentManager(), "MenuBottomSheet");
