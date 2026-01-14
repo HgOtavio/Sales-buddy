@@ -9,6 +9,9 @@ router.post('/login', userController.login);
 router.get('/users', authMiddleware, userController.getAllUsers);
 router.put('/users/:id', authMiddleware, userController.updateUser);
 
+router.post('/forgot-password', userController.forgotPassword);
+router.post('/reset-password', userController.resetPassword);
+
 router.delete('/users/:id', authMiddleware, userController.deleteUser);
 
 

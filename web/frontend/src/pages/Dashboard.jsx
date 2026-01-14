@@ -32,7 +32,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     const token = localStorage.getItem('salesToken');
-    if (!token) {
+    const userData = localStorage.getItem('userData');
+    
+    if (!token || !userData) {
+        localStorage.removeItem('salesToken');
+        localStorage.removeItem('userData');
         navigate('/login'); 
     }
   }, [navigate]);

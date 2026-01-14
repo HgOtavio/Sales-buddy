@@ -8,7 +8,7 @@ const AuthService = {
       console.log("1. Iniciando login no AuthService...");
       console.log("2. Enviando dados:", { user, password });
 
-      const response = await api.post("/login", {
+      const response = await api.post("/auth/login", {
         user: user,
         password: password
       });

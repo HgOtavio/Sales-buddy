@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types"; 
+import { toast } from 'react-toastify';
+import { maskCNPJ } from "../utils/masks"; // Importando sua máscara externa
 import "../styles/AddUserForm.css";
 import iconHeader from "../assets/icon-add-blue.svg"; 
 
 export function AddUserForm({ userToEdit, onSubmit, formId }) {
- 
   const [formData, setFormData] = useState({
     user: "",    
     name: "",    
@@ -12,6 +13,12 @@ export function AddUserForm({ userToEdit, onSubmit, formId }) {
     taxId: "",   
     email: ""
   });
+
+  const nameRef = useRef(null);
+  const userRef = useRef(null);
+  const emailRef = useRef(null);
+  const companyRef = useRef(null);
+  const taxIdRef = useRef(null);
 
   useEffect(() => {
     if (userToEdit) {
@@ -23,26 +30,41 @@ export function AddUserForm({ userToEdit, onSubmit, formId }) {
         email: userToEdit.email || ""
       });
     } else {
-      setFormData({ 
-        user: "", 
-        name: "", company: "", 
-        taxId: "", email: "" });
+      setFormData({ user: "", name: "", company: "", taxId: "", email: "" });
     }
   }, [userToEdit]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const finalValue = name === "taxId" ? maskCNPJ(value) : value;
+    setFormData((prev) => ({ ...prev, [name]: finalValue }));
+  };
+
+  const handleKeyDown = (e, nextRef) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (nextRef && nextRef.current) {
+        nextRef.current.focus();
+      } else {
+        handleSubmit(e);
+      }
+    }
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+
+    if (!formData.name) { toast.error("Preencha o Nome"); nameRef.current.focus(); return; }
+    if (!formData.user) { toast.error("Preencha o Usuário"); userRef.current.focus(); return; }
+    if (!formData.email) { toast.error("Preencha o E-mail"); emailRef.current.focus(); return; }
+    if (!formData.company) { toast.error("Preencha a Empresa"); companyRef.current.focus(); return; }
+    if (!formData.taxId) { toast.error("Preencha o CNPJ"); taxIdRef.current.focus(); return; }
+
     onSubmit({ ...formData, id: userToEdit?.id }); 
   };
 
   return (
     <div className="add-user-container">
-      
       <div className="add-user-header">
         <img src={iconHeader} alt="Icone" className="header-icon" />
         <h2 className="add-user-title">
@@ -50,29 +72,34 @@ export function AddUserForm({ userToEdit, onSubmit, formId }) {
         </h2>
       </div>
 
-      <form id={formId} className="add-user-form" onSubmit={handleSubmit}>
+      <form id={formId} className="add-user-form" onSubmit={handleSubmit} noValidate>
         
         <div className="form-group">
-          <label className="form-label">Nome Completo</label>
+          <label className="form-label">Nome </label>
           <input 
             type="text" 
             name="name" 
+            ref={nameRef}
             className="form-input" 
             value={formData.name} 
             onChange={handleChange}
-            required 
+            onKeyDown={(e) => handleKeyDown(e, userRef)}
+            autoComplete="off"
+            
           />
         </div>
 
         <div className="form-group">
-          <label className="form-label">Usuário (Nick)</label>
+          <label className="form-label">Usuário </label>
           <input 
             type="text" 
             name="user" 
+            ref={userRef}
             className="form-input" 
             value={formData.user} 
             onChange={handleChange}
-            required 
+            onKeyDown={(e) => handleKeyDown(e, emailRef)}
+            autoComplete="off"
           />
         </div>
 
@@ -81,10 +108,12 @@ export function AddUserForm({ userToEdit, onSubmit, formId }) {
           <input 
             type="email" 
             name="email"
+            ref={emailRef}
             className="form-input" 
             value={formData.email} 
             onChange={handleChange}
-            required 
+            onKeyDown={(e) => handleKeyDown(e, companyRef)}
+            autoComplete="off"
           />
         </div>
 
@@ -94,10 +123,12 @@ export function AddUserForm({ userToEdit, onSubmit, formId }) {
                 <input 
                     type="text" 
                     name="company"
+                    ref={companyRef}
                     className="form-input" 
                     value={formData.company} 
                     onChange={handleChange}
-                    required 
+                    onKeyDown={(e) => handleKeyDown(e, taxIdRef)}
+                    autoComplete="off"
                 />
             </div>
 
@@ -106,14 +137,17 @@ export function AddUserForm({ userToEdit, onSubmit, formId }) {
                 <input 
                     type="text" 
                     name="taxId"
+                    ref={taxIdRef}
                     className="form-input" 
                     value={formData.taxId} 
                     onChange={handleChange}
-                    required 
+                    onKeyDown={(e) => handleKeyDown(e, null)}
+                    placeholder="00.000.000/0000-00"
+                    autoComplete="off"
+                    maxLength={18}
                 />
             </div>
         </div>
-        
       </form>
     </div>
   );

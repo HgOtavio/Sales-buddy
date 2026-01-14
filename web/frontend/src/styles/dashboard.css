@@ -64,13 +64,13 @@ body,
 
 .content {
   flex: 1;
-  margin: 15px;
-  
+  width: 400%;
+  margin: 12px;
   background: rgba(255, 255, 255, 0.6);
   border-radius: 6px;
-  padding: 40px;
+  padding: 2%;
 
-  height: calc(100vh - 60px); 
+  height: 400%; 
   box-sizing: border-box;
   overflow-y: auto;
 

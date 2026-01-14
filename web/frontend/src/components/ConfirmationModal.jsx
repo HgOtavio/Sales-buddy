@@ -29,7 +29,6 @@ export function ConfirmationModal({
           </div>
           
           <div className="modal-actions">
-            {/* Mantive os botões conforme seu pedido original */}
             <button className="btn-modal btn-blue" onClick={() => alert("Imagem Salva!")}>
               Salvar
             </button>
@@ -45,7 +44,6 @@ export function ConfirmationModal({
     );
   }
 
-  // --- MODO: CONFIRMAÇÃO DE EXCLUSÃO (Padrão) ---
   return (
     <div className="modal-overlay">
       <div className="modal-box">

@@ -31,7 +31,6 @@
         <activity
             android:name=".authenticationActivity"
             android:exported="false" />
-        <activity android:name=".salesActivity" />
         <activity
             android:name=".SplashActivity"
             android:exported="true">
@@ -41,9 +40,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".MainActivity"
-            android:exported="false" />
+
     </application>
 
 </manifest>

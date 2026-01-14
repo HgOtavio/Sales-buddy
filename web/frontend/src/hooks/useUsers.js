@@ -8,7 +8,6 @@ export function useUsers() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Busca usuários no 
   const refreshUsers = useCallback(async () => {
     try {
       const token = localStorage.getItem('salesToken');
@@ -31,6 +30,14 @@ export function useUsers() {
   }, [refreshUsers]);
 
   function toggleSelection(id) {
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    const meuId = userData?.id;
+
+    if (id === meuId) {
+      toast.warning("Você não pode selecionar sua própria conta para exclusão.");
+      return;
+    }
+
     if (selectedIds.includes(id)) {
       setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
     } else {
@@ -46,20 +53,26 @@ export function useUsers() {
 
   async function confirmDelete() {
     try {
-        const token = localStorage.getItem('salesToken');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
+      const token = localStorage.getItem('salesToken');
+      const userData = JSON.parse(localStorage.getItem('userData'));
+      const meuId = userData?.id;
 
-       
-        await Promise.all(selectedIds.map(id => 
-            api.delete(`/auth/users/${id}`, config)
-        ));
-
-        toast.success("Usuário(s) excluído(s) com sucesso!");
-        
-        setSelectedIds([]);
+      if (selectedIds.includes(meuId)) {
+        toast.error("Ação bloqueada: Sua conta está na lista de exclusão.");
         setIsModalOpen(false);
-        
-        refreshUsers(); 
+        return;
+      }
+
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+
+      await Promise.all(selectedIds.map(id => 
+          api.delete(`/auth/users/${id}`, config)
+      ));
+
+      toast.success("Usuário(s) excluído(s) com sucesso!");
+      setSelectedIds([]);
+      setIsModalOpen(false);
+      refreshUsers(); 
 
     } catch (error) {
         console.error(error);
