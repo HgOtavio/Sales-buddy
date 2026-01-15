@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types"; 
 import { toast } from 'react-toastify';
-import { maskCNPJ } from "../utils/masks"; // Importando sua máscara externa
+import { maskCNPJ } from "../utils/masks"; 
 import "../styles/AddUserForm.css";
 import iconHeader from "../assets/icon-add-blue.svg"; 
 
@@ -20,6 +20,17 @@ export function AddUserForm({ userToEdit, onSubmit, formId }) {
   const companyRef = useRef(null);
   const taxIdRef = useRef(null);
 
+  const isReadyToSubmit = useRef(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        isReadyToSubmit.current = true;
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+  
+
   useEffect(() => {
     if (userToEdit) {
       setFormData({
@@ -33,6 +44,12 @@ export function AddUserForm({ userToEdit, onSubmit, formId }) {
       setFormData({ user: "", name: "", company: "", taxId: "", email: "" });
     }
   }, [userToEdit]);
+
+  useEffect(() => {
+    if (nameRef.current) {
+      nameRef.current.focus();
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -54,11 +71,36 @@ export function AddUserForm({ userToEdit, onSubmit, formId }) {
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
 
-    if (!formData.name) { toast.error("Preencha o Nome"); nameRef.current.focus(); return; }
-    if (!formData.user) { toast.error("Preencha o Usuário"); userRef.current.focus(); return; }
-    if (!formData.email) { toast.error("Preencha o E-mail"); emailRef.current.focus(); return; }
-    if (!formData.company) { toast.error("Preencha a Empresa"); companyRef.current.focus(); return; }
-    if (!formData.taxId) { toast.error("Preencha o CNPJ"); taxIdRef.current.focus(); return; }
+    
+    if (!isReadyToSubmit.current) {
+        return; 
+    }
+
+    if (!formData.name) { 
+        toast.error("Preencha o Nome"); 
+        nameRef.current?.focus(); 
+        return; 
+    }
+    if (!formData.user) { 
+        toast.error("Preencha o Usuário"); 
+        userRef.current?.focus(); 
+        return; 
+    }
+    if (!formData.email) { 
+        toast.error("Preencha o E-mail"); 
+        emailRef.current?.focus(); 
+        return; 
+    }
+    if (!formData.company) { 
+        toast.error("Preencha a Empresa"); 
+        companyRef.current?.focus(); 
+        return; 
+    }
+    if (!formData.taxId) { 
+        toast.error("Preencha o CNPJ"); 
+        taxIdRef.current?.focus(); 
+        return; 
+    }
 
     onSubmit({ ...formData, id: userToEdit?.id }); 
   };
@@ -75,7 +117,7 @@ export function AddUserForm({ userToEdit, onSubmit, formId }) {
       <form id={formId} className="add-user-form" onSubmit={handleSubmit} noValidate>
         
         <div className="form-group">
-          <label className="form-label">Nome </label>
+          <label className="form-label">Nome</label>
           <input 
             type="text" 
             name="name" 
@@ -85,12 +127,11 @@ export function AddUserForm({ userToEdit, onSubmit, formId }) {
             onChange={handleChange}
             onKeyDown={(e) => handleKeyDown(e, userRef)}
             autoComplete="off"
-            
           />
         </div>
 
         <div className="form-group">
-          <label className="form-label">Usuário </label>
+          <label className="form-label">Usuário</label>
           <input 
             type="text" 
             name="user" 

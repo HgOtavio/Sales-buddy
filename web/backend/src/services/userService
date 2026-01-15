@@ -1,0 +1,241 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const Company = require('../models/Company');
+const emailService = require('./emailService');
+const { 
+    isValidEmail, 
+    isValidCNPJ,
+    checkDuplicates 
+} = require('../utils/userHelpers');
+
+exports.registerUser = async ({ name, user, company, email, taxId }) => {
+    // Validações de formato
+    const cleanTaxId = taxId.replace(/[^\d]+/g, '');
+
+    if (!isValidEmail(email)) {
+        throw { status: 400, message: "Formato de e-mail inválido." };
+    }
+
+    if (!isValidCNPJ(cleanTaxId)) {
+        throw { status: 400, message: "CNPJ inválido." };
+    }
+
+    // Lógica da Empresa
+    let companyRecord = null;
+    const companyByCnpj = await Company.findOne({ where: { taxId: cleanTaxId } });
+    const companyByName = await Company.findOne({ where: { name: company } });
+
+    if (companyByCnpj) {
+        companyRecord = companyByCnpj;
+    } else {
+        if (companyByName) {
+            throw { 
+                status: 409, 
+                message: `O nome de empresa "${company}" já está cadastrado com outro CNPJ. Por favor, use um nome diferente (ex: ${company} Filial) ou verifique o CNPJ.` 
+            };
+        }
+        companyRecord = await Company.create({
+            name: company,
+            taxId: cleanTaxId
+        });
+    }
+
+    // Lógica de Duplicidade de Usuário
+    const duplicateError = await checkDuplicates(user, email);
+    if (duplicateError) {
+        throw { status: 409, message: duplicateError };
+    }
+
+    // Criação do Usuário
+    const tempInternalPass = await bcrypt.hash("aguardando_ativacao_" + Date.now(), 10);
+
+    const newUser = await User.create({
+        name, 
+        user, 
+        email, 
+        companyId: companyRecord.id, 
+        password: tempInternalPass 
+    });
+
+    // Token de Ativação
+    const activationToken = jwt.sign(
+        { id: newUser.id, purpose: 'activate_account' }, 
+        process.env.JWT_SECRET,
+        { expiresIn: '24h' }
+    );
+
+    const tokenHash = await bcrypt.hash(activationToken, 10);
+    newUser.password = tokenHash;
+    await newUser.save();
+
+    // Envio de E-mail
+    try {
+        await emailService.sendWelcomeTokenEmail(email, user, activationToken);
+        return { message: "Usuário cadastrado com sucesso! Convite enviado." };
+    } catch (mailError) {
+        console.error(mailError);
+        // Não jogamos erro aqui para não falhar o cadastro, mas avisamos
+        return { message: "Usuário criado, mas erro ao enviar e-mail.", warning: true };
+    }
+};
+
+exports.updateUser = async (targetId, requesterId, data) => {
+    const { name, user, company, email, taxId } = data;
+    
+    const targetUser = await User.findByPk(targetId, { include: Company });
+    if (!targetUser) throw { status: 404, message: "Usuário não encontrado." };
+
+    // Lógica de atualização de Empresa
+    if (company || taxId) {
+        const ownerUser = await User.findOne({
+            where: { companyId: targetUser.companyId },
+            order: [['id', 'ASC']]
+        });
+        
+        if (ownerUser && String(ownerUser.id) !== String(requesterId)) {
+            throw { 
+                status: 403, 
+                message: `Apenas o administrador principal (${ownerUser.name}) tem permissão para alterar o Nome da Empresa ou CNPJ.` 
+            };
+        }
+
+        const effectiveTaxId = taxId ? String(taxId).replace(/[^\d]+/g, '') : targetUser.Company.taxId;
+        const effectiveName = company || targetUser.Company.name;
+
+        if (taxId && !isValidCNPJ(effectiveTaxId)) {
+            throw { status: 400, message: "CNPJ inválido." };
+        }
+
+        const existingCompany = await Company.findOne({ where: { taxId: effectiveTaxId } });
+
+        if (existingCompany && String(existingCompany.id) !== String(targetUser.companyId)) {
+             throw { status: 409, message: `O CNPJ ${effectiveTaxId} já pertence a outra empresa cadastrada.` };
+        }
+
+        const userCompany = await Company.findByPk(targetUser.companyId);
+        userCompany.name = effectiveName;
+        userCompany.taxId = effectiveTaxId;
+        await userCompany.save();
+    }
+
+    // Atualização do Usuário
+    targetUser.name = name || targetUser.name;
+    targetUser.user = user || targetUser.user;
+    targetUser.email = email || targetUser.email;
+    
+    await targetUser.save();
+    return { message: "Dados atualizados com sucesso!" };
+};
+
+exports.authenticateUser = async (username, password) => {
+    const targetUser = await User.findOne({ 
+        where: { user: username },
+        include: Company 
+    });
+    
+    if (!targetUser || !(await bcrypt.compare(password, targetUser.password))) {
+        throw { status: 401, message: "Credenciais inválidas." };
+    }
+
+    const payload = {
+        id: targetUser.id,
+        name: targetUser.name,
+        user: targetUser.user,
+        email: targetUser.email,
+        companyId: targetUser.companyId,
+        companyName: targetUser.Company ? targetUser.Company.name : "Sem Empresa",
+        taxId: targetUser.Company ? targetUser.Company.taxId : "N/A"
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
+    return { token };
+};
+
+exports.deleteUser = async (targetId, requesterId) => {
+    if (requesterId && String(requesterId) === String(targetId)) {
+        throw { status: 403, message: "Você não pode deletar sua própria conta." };
+    }
+
+    const targetUser = await User.findByPk(targetId);
+    if (!targetUser) throw { status: 404, message: "Usuário não encontrado" };
+
+    await targetUser.destroy();
+    return { message: "Usuário deletado com sucesso" };
+};
+
+exports.getAllUsers = async () => {
+    const users = await User.findAll({ 
+        attributes: { exclude: ['password'] },
+        include: Company
+    });
+    
+    // Formatação de dados
+    return users.map(u => ({
+        id: u.id,
+        name: u.name,
+        user: u.user,
+        email: u.email,
+        company: u.Company ? u.Company.name : null,
+        taxId: u.Company ? u.Company.taxId : null,
+        createdAt: u.createdAt,
+        updatedAt: u.updatedAt
+    }));
+};
+
+exports.forgotPassword = async (email) => {
+    const targetUser = await User.findOne({ where: { email } });
+
+    if (!targetUser) {
+        throw { status: 404, message: "Usuário não encontrado." };
+    }
+
+    if (!process.env.JWT_SECRET) {
+        throw { status: 500, message: "Erro de configuração no servidor." };
+    }
+
+    const resetToken = jwt.sign(
+        { id: targetUser.id, purpose: 'password_reset' }, 
+        process.env.JWT_SECRET
+    );
+
+    try {
+        await emailService.sendResetTokenEmail(email, resetToken);
+        return { message: "Token enviado para o e-mail." };
+    } catch (mailError) {
+        throw { status: 500, message: "Erro ao conectar com servidor de e-mail." };
+    }
+};
+
+exports.resetPassword = async (token, newPassword, confirmPassword) => {
+    if (newPassword !== confirmPassword) {
+        throw { status: 400, message: "As senhas não coincidem." };
+    }
+
+    let decoded;
+    try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+        throw { status: 401, message: "Token inválido ou expirado." };
+    }
+    
+    const targetUser = await User.findByPk(decoded.id);
+    if (!targetUser) {
+        throw { status: 404, message: "Usuário não encontrado." };
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    targetUser.password = await bcrypt.hash(newPassword, salt);
+    
+    await targetUser.save();
+    return { message: "Senha atualizada com sucesso!" };
+};
+
+exports.verifySessionUser = async (userId) => {
+    if (!User) throw new Error("Model User não definido");
+    
+    const user = await User.findByPk(userId);
+    if (!user) throw { status: 401, message: "Usuário não existe mais." };
+    
+    return { id: user.id, name: user.name };
+};

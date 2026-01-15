@@ -1,30 +1,48 @@
-const { sequelize, User } = require('./src/models'); 
-const bcrypt = require('bcryptjs');
 require('dotenv').config();
+const { sequelize } = require('./src/config/dbConfig');
+const User = require('./src/models/User');
+const Company = require('./src/models/Company'); // Importar o modelo Company
+const bcrypt = require('bcryptjs');
 
 const resetAndCreateMaster = async () => {
     try {
         await sequelize.authenticate();
-        
+        console.log('Conectado ao banco...');
+
+        // Limpa o banco e recria as tabelas (Cuidado: Apaga tudo!)
         await sequelize.sync({ force: true });
-        
-        const passwordHash = await bcrypt.hash("123", 10);
-        
+        console.log('Tabelas resetadas.');
+
+        // 1. CRIA A EMPRESA PADRÃO (Obrigatório agora)
+        const adminCompany = await Company.create({
+            name: "SalesBuddy HQ (Admin)",
+            taxId: "00000000000191" // Um CNPJ fictício para o admin
+        });
+
+        console.log(`Empresa Admin criada com ID: ${adminCompany.id}`);
+
+        // 2. CRIA A SENHA HASH
+        const hashedPassword = await bcrypt.hash("admin123", 10);
+
+        // 3. CRIA O USUÁRIO VINCULADO À EMPRESA
         await User.create({
             name: "Super Admin",
             user: "admin",
-            company: "SalesBuddy HQ",
             email: "admin@salesbuddy.com",
-            taxId: "00.000.000/0000-00",
-            password: passwordHash
+            password: hashedPassword,
+            companyId: adminCompany.id // <--- AQUI ESTÁ A CORREÇÃO (Vínculo)
         });
 
-        console.log("Banco de dados resetado e Usuário Mestre criado com ID 1!");
-        process.exit(); 
+        console.log('>>> Sucesso! Usuário "admin" criado.');
+        console.log('Login: admin');
+        console.log('Senha: admin123');
+        console.log('Empresa: SalesBuddy HQ (Admin)');
+
     } catch (error) {
-        console.error("Erro ao resetar e criar usuário:", error);
-        process.exit(1);
+        console.error('Erro ao criar usuário:', error);
+    } finally {
+        await sequelize.close();
     }
 };
 
-resetAndCreateMaster();
+export { resetAndCreateMaster };

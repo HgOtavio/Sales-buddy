@@ -1,9 +1,10 @@
 import { toast } from 'react-toastify';
 import api from "../services/api";
 
-export function useFloatingActions(setActive, refreshUsers, editingUser) {
+export function useFloatingActions(setActive, refreshUsers, editingUser, activeTab) {
   
   function handleGoToAdd() {
+    if (activeTab === "cadastro") return;
     setActive("cadastro");
   }
 
@@ -29,7 +30,7 @@ export function useFloatingActions(setActive, refreshUsers, editingUser) {
     }
   }
 
- async function handleResetPassword() {
+  async function handleResetPassword() {
     if (!editingUser?.email) {
       toast.error("E-mail do usuário não identificado.");
       return;
@@ -53,9 +54,13 @@ export function useFloatingActions(setActive, refreshUsers, editingUser) {
     }
   }
 
+  
+  const isAddDisabled = activeTab === "cadastro";
+
   return {
     handleGoToAdd,
     handleFormSubmit,   
-    handleResetPassword
+    handleResetPassword,
+    isAddDisabled 
   };
 }

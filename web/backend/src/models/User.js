@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/dbConfig');
+const Company = require('./Company'); 
 
 const User = sequelize.define('User', {
     name: {
@@ -11,23 +12,28 @@ const User = sequelize.define('User', {
         allowNull: false,
         unique: true 
     },
-    company: {
-        type: DataTypes.STRING,
-    },
     email: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,
     },
-    taxId: {
-        type: DataTypes.STRING,
-    },
     password: {
         type: DataTypes.STRING,
         allowNull: false,
     },
+    companyId: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: Company,
+            key: 'id'
+        },
+        allowNull: false
+    }
 }, {
     timestamps: true,
 });
+
+User.belongsTo(Company, { foreignKey: 'companyId' });
+Company.hasMany(User, { foreignKey: 'companyId' });
 
 module.exports = User;

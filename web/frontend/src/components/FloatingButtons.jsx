@@ -4,17 +4,26 @@ import iconTrash from "../assets/icon-delete.svg";
 import iconCheck from "../assets/icon-check.svg";
 import iconKey from "../assets/icon-key.svg"; 
 
-export function FloatingButtons({ activeTab, onDelete, onAdd, onReset, disabled, isEditing, formId }) {
+export function FloatingButtons({ activeTab, onDelete, onAdd, onReset, disabled, isEditing, formId, isAdding }) {
   
   if (activeTab === "cadastro") {
+    const isResetDisabled = !isEditing; 
+
     return (
       <div className="floating-buttons">
         
-        <div className="action-group" onClick={onReset}>
+        <div 
+          className={`action-group ${isResetDisabled ? "disabled-group" : ""}`} 
+          onClick={!isResetDisabled ? onReset : undefined}
+        >
           <div className="icon-outside icon-reset">
             <img src={iconKey} alt="Resetar" />
           </div>
-          <button type="button" className="btn-text btn-reset-text">
+          <button 
+            type="button" 
+            className="btn-text btn-reset-text"
+            disabled={isResetDisabled} 
+          >
             Resetar Senha
           </button>
         </div>
@@ -52,11 +61,17 @@ export function FloatingButtons({ activeTab, onDelete, onAdd, onReset, disabled,
           </button>
         </div>
 
-        <div className="action-group" onClick={onAdd}>
+        <div 
+          className={`action-group ${isAdding ? "disabled-group" : ""}`} 
+          onClick={!isAdding ? onAdd : undefined}
+        >
           <div className="icon-outside icon-add">
             <img src={iconPlus} alt="Adicionar" />
           </div>
-          <button className="btn-text btn-add-text">
+          <button 
+            className="btn-text btn-add-text" 
+            disabled={isAdding}
+          >
             Cadastrar novo usuário
           </button>
         </div>

@@ -1,45 +1,34 @@
 const { Op } = require('sequelize');
 const User = require('../models/User');
 
-// Função "Standard Gold" de validação de CNPJ
 const isValidCNPJ = (cnpj) => {
     if (!cnpj) return false;
 
-    // 1. Deixa apenas números
-    cnpj = String(cnpj).replace(/[^\d]+/g, '');
+    const strCNPJ = String(cnpj).replace(/[^\d]+/g, '');
 
-    // 2. Valida tamanho e números repetidos
-    if (cnpj.length !== 14) return false;
-    if (/^(\d)\1+$/.test(cnpj)) return false;
+    if (strCNPJ.length !== 14) return false;
+    if (/^(\d)\1+$/.test(strCNPJ)) return false;
 
-    // 3. Validação do Primeiro Dígito
-    let tamanho = cnpj.length - 2;
-    let numeros = cnpj.substring(0, tamanho);
-    let digitos = cnpj.substring(tamanho);
-    let soma = 0;
-    let pos = tamanho - 7;
+    const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
 
-    for (let i = tamanho; i >= 1; i--) {
-        soma += parseInt(numeros.charAt(tamanho - i)) * pos--;
-        if (pos < 2) pos = 9;
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+        sum += parseInt(strCNPJ[i]) * weights1[i];
     }
+    let remainder = sum % 11;
+    let digit1 = remainder < 2 ? 0 : 11 - remainder;
 
-    let resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
-    if (resultado !== parseInt(digitos.charAt(0))) return false;
+    if (parseInt(strCNPJ[12]) !== digit1) return false;
 
-    // 4. Validação do Segundo Dígito
-    tamanho = tamanho + 1;
-    numeros = cnpj.substring(0, tamanho);
-    soma = 0;
-    pos = tamanho - 7;
-
-    for (let i = tamanho; i >= 1; i--) {
-        soma += parseInt(numeros.charAt(tamanho - i)) * pos--;
-        if (pos < 2) pos = 9;
+    sum = 0;
+    for (let i = 0; i < 13; i++) {
+        sum += parseInt(strCNPJ[i]) * weights2[i];
     }
+    remainder = sum % 11;
+    let digit2 = remainder < 2 ? 0 : 11 - remainder;
 
-    resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
-    if (resultado !== parseInt(digitos.charAt(1))) return false;
+    if (parseInt(strCNPJ[13]) !== digit2) return false;
 
     return true;
 };
@@ -63,18 +52,10 @@ const generateStrongPassword = (length = 12) => {
 };
 
 const checkDuplicates = async (user, email, taxId, company, excludeUserId = null) => {
-    const cleanTaxId = String(taxId).replace(/[^\d]+/g, ''); 
-    
     const query = {
         [Op.or]: [
             { user: user },
-            { email: email },
-            { 
-                [Op.and]: [
-                    { taxId: cleanTaxId },
-                    { company: { [Op.ne]: company } }
-                ] 
-            }
+            { email: email }
         ]
     };
 
@@ -85,11 +66,8 @@ const checkDuplicates = async (user, email, taxId, company, excludeUserId = null
     const existingUser = await User.findOne({ where: query });
 
     if (existingUser) {
-        if (existingUser.user === user) return "Nickname (usuário) já existe.";
+        if (existingUser.user === user) return "Nome de usuário já existe.";
         if (existingUser.email === email) return "E-mail já cadastrado.";
-        if (existingUser.taxId === cleanTaxId && existingUser.company !== company) {
-            return "Este CNPJ já está vinculado a outra empresa.";
-        }
     }
     return null;
 };

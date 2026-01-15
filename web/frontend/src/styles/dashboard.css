@@ -30,26 +30,39 @@ body,
   margin-bottom: 40px;
 }
 
+/* --- AQUI ESTÁ A MÁGICA PARA NÃO PULAR --- */
 .menu-item {
   width: 100%;
-  padding: 14px 24px;
-  padding-left: 40px;
+  
+  /* 1. Definimos uma altura fixa. 
+     Isso impede que o botão cresça quando o texto aumenta. */
+  height: 50px; 
+  
+  /* 2. Removemos o padding vertical (top/bottom) 
+     porque o flexbox vai centralizar tudo na altura de 50px */
+  padding: 0 24px 0 40px; 
+  
   display: flex;
-  align-items: center;
+  align-items: center; /* Mantém ícone e texto centralizados verticalmente */
   gap: 12px;
+  
   color: #a32c65;
   font-size: 15px;
   cursor: pointer;
   box-sizing: border-box;
-  transition: color 0.25s ease, font-size 0.25s ease;
+  /* Sem transition para ser instantâneo */
 }
 
 .menu-item img {
   width: 20px;
+  /* Garante que o ícone não estique */
+  flex-shrink: 0; 
 }
 
 .menu-item span {
-  transition: color 0.25s ease, font-size 0.25s ease;
+  font-weight: 400;
+  /* Garante que o texto fique na linha correta */
+  line-height: 1; 
 }
 
 .menu-item.active {
@@ -58,23 +71,22 @@ body,
 
 .menu-item.active span {
   color: #074a82;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 18px; /* Maior */
+  font-weight: 800; /* Mais gordo */
 }
 
+/* --- RESTANTE DO CÓDIGO --- */
 .content {
   flex: 1;
-  width: 400%;
+  width: 100%;
   margin: 12px;
   background: rgba(255, 255, 255, 0.6);
   border-radius: 6px;
   padding: 2%;
-
-  height: 400%; 
+  height: 100%; 
   box-sizing: border-box;
   overflow-y: auto;
-
-  position: relative; 
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -84,11 +96,9 @@ body,
   background: transparent;
   box-shadow: none;
   border-radius: 14px;
-  
   width: 80%;
   max-width: 89%;
-  
-  margin: 0; 
+  margin: 0;
   padding: 0;
 }
 
