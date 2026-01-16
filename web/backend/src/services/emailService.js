@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 
+// MANTENHA A SUA CONFIGURAÇÃO EXATAMENTE COMO ESTÁ
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: parseInt(process.env.EMAIL_PORT),
@@ -13,44 +14,71 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-const sendWelcomeTokenEmail = async (email, user, token) => {
+// ... (Suas funções sendWelcomeTokenEmail e sendResetTokenEmail continuam aqui) ...
+const sendWelcomeTokenEmail = async (email, user, token) => { /* ... seu código ... */ };
+const sendResetTokenEmail = async (email, token) => { /* ... seu código ... */ };
+
+
+//// src/services/emailService.js
+
+const sendSaleReceipt = async (email, saleData) => {
+    
+    // CORREÇÃO AQUI:
+    // O Sequelize retorna 'saleItems', mas seu código antigo buscava 'items'.
+    // Adicionei uma proteção (|| []) para não quebrar se vier vazio.
+    const listaDeItens = saleData.saleItems || saleData.items || [];
+
+    const itensHtml = listaDeItens.map(item => 
+        `<li style="margin-bottom: 5px;">
+            <strong>${item.productName}</strong> <br>
+            <span style="font-size: 12px; color: #555;">
+                ${item.quantity}x R$ ${parseFloat(item.unitPrice).toFixed(2)}
+            </span>
+        </li>`
+    ).join('');
+
     const mailOptions = {
         from: `"Sale-Buddy" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: 'Bem-vindo ao Sale-Buddy - Crie sua Senha',
+        to: email, 
+        subject: `Comprovante de Venda #${saleData.id}`,
         html: `
-            <div style="font-family: sans-serif; padding: 20px;">
-                <h2 style="color: #007bff;">Bem-vindo, ${user}!</h2>
-                <p>Seu cadastro foi realizado.</p>
-                <p>Use este token para criar sua senha:</p>
-                <div style="background: #f1f1f1; padding: 15px; font-family: monospace;">
-                    ${token}
+            <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; max-width: 500px; margin: 0 auto;">
+                
+                <h2 style="color: #074A82; text-align: center;">Comprovante de Venda</h2>
+                <p style="text-align: center; color: #777;">Venda #${saleData.id}</p>
+                <hr style="border: 0; border-top: 1px solid #eee;">
+
+                <p><strong>Cliente:</strong> ${saleData.clientName}</p>
+                <p><strong>CPF:</strong> ${saleData.clientCpf || 'Não informado'}</p>
+
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    <h3 style="margin-top: 0; font-size: 16px;">Itens Adquiridos:</h3>
+                    <ul style="padding-left: 20px;">
+                        ${itensHtml || '<li>Item avulso (sem detalhes)</li>'}
+                    </ul>
                 </div>
+
+                <div style="text-align: right; font-size: 16px;">
+                    <p>Total: <strong>R$ ${parseFloat(saleData.saleValue || saleData.totalValue || 0).toFixed(2)}</strong></p>
+                    <p style="font-size: 14px; color: #555;">Pago: R$ ${parseFloat(saleData.receivedValue || 0).toFixed(2)}</p>
+                    <p style="font-size: 14px; color: #555;">Troco: R$ ${parseFloat(saleData.change || 0).toFixed(2)}</p>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid #eee; margin-top: 20px;">
+                <p style="text-align: center; font-size: 12px; color: #999;">
+                    Obrigado pela preferência!<br>
+                    Enviado por <strong>Sales-Buddy</strong>
+                </p>
             </div>
         `
     };
-    return transporter.sendMail(mailOptions);
-};
-const sendResetTokenEmail = async (email, token) => {
-    const mailOptions = {
-        from: `"Suporte Sale-Buddy" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: 'Recuperação de Senha - Sale-Buddy',
-        html: `
-            <div style="font-family: sans-serif; padding: 20px;">
-                <h2 style="color: #dc3545;">Recuperação de Senha</h2>
-                <p>Você solicitou a recuperação de senha.</p>
-                <p>Seu token de segurança é:</p>
-                <div style="background: #f1f1f1; padding: 15px; font-family: monospace;">
-                    ${token}
-                </div>
-            </div>
-        `
-    };
+    
+    console.log(`📧 Enviando comprovante para: ${email}`);
     return transporter.sendMail(mailOptions);
 };
 
 module.exports = {
     sendWelcomeTokenEmail,
-    sendResetTokenEmail
+    sendResetTokenEmail,
+    sendSaleReceipt // <--- Adicionei aqui
 };

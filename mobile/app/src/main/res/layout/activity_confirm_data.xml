@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context=".ConfirmDataActivity">
+    tools:context=".view.ConfirmDataActivity">
 
     <ImageView
         android:id="@+id/iv_background"

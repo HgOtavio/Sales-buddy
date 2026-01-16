@@ -1,30 +1,29 @@
-const { sequelize } = require('../config/dbConfig'); // Ajuste o caminho se necessário
+const { sequelize } = require('../config/dbConfig');
+
+const Company = require('./Company');
 const User = require('./User');
 const Sale = require('./Sale');
-const Item = require('./Item');
+const SaleItem = require('./SaleItem'); // Certifique-se que o arquivo é SaleItem.js
 
+// --- DEFINIÇÃO DE RELACIONAMENTOS ---
 
-User.hasMany(Sale);
-Sale.belongsTo(User);
+// 1. Usuário e Empresa
+Company.hasMany(User, { foreignKey: 'companyId' });
+User.belongsTo(Company, { foreignKey: 'companyId' });
 
+// 2. Usuário e Vendas
+User.hasMany(Sale, { foreignKey: 'userId' });
+Sale.belongsTo(User, { foreignKey: 'userId' });
 
-Sale.hasMany(Item, { as: 'saleItems', onDelete: 'CASCADE' }); 
-Item.belongsTo(Sale);
-
-const connectDatabase = async () => {
-    try {
-        await sequelize.authenticate();
-        await sequelize.sync({ alter: true }); 
-        console.log("Database connected and models synchronized.");
-    } catch (error) {
-        console.error(" Connection error:", error);
-    }
-};
+// 3. Venda e Itens (Onde deu o erro)
+// O alias 'saleItems' é importante para o 'include' funcionar no Service
+Sale.hasMany(SaleItem, { as: 'saleItems', foreignKey: 'saleId', onDelete: 'CASCADE' });
+SaleItem.belongsTo(Sale, { foreignKey: 'saleId' });
 
 module.exports = { 
-    sequelize, 
-    connectDatabase, 
+    sequelize,
+    Company, 
     User, 
     Sale, 
-    Item 
+    SaleItem 
 };

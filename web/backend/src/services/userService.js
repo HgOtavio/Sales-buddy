@@ -10,44 +10,53 @@ const {
 } = require('../utils/userHelpers');
 
 exports.registerUser = async ({ name, user, company, email, taxId }) => {
-    // Validações de formato
-    const cleanTaxId = taxId.replace(/[^\d]+/g, '');
+    // 1. Limpeza e Validações de Formato
+    const cleanTaxId = String(taxId).replace(/[^\d]+/g, '');
 
     if (!isValidEmail(email)) {
-        throw { status: 400, message: "Formato de e-mail inválido." };
+        throw { status: 400, message: `O formato do e-mail '${email}' é inválido.` };
     }
 
     if (!isValidCNPJ(cleanTaxId)) {
-        throw { status: 400, message: "CNPJ inválido." };
+        throw { status: 400, message: `O CNPJ '${taxId}' informado não é válido.` };
     }
 
-    // Lógica da Empresa
+    // 2. Lógica da Empresa (Verificação de conflitos de Nome vs CNPJ)
     let companyRecord = null;
     const companyByCnpj = await Company.findOne({ where: { taxId: cleanTaxId } });
     const companyByName = await Company.findOne({ where: { name: company } });
 
     if (companyByCnpj) {
+        // Se achou CNPJ, usamos essa empresa
         companyRecord = companyByCnpj;
+        
+        // Verificação de segurança: Nome bate? (Opcional, mas bom para avisar)
+        if (companyByName && companyByName.id !== companyByCnpj.id) {
+             // Caso raro: Nome existe em outra empresa diferente
+             throw { status: 409, message: `Conflito: O CNPJ pertence à empresa ID ${companyByCnpj.id}, mas o nome '${company}' já é usado por outra empresa.` };
+        }
     } else {
+        // Se o CNPJ é novo, o nome não pode existir
         if (companyByName) {
             throw { 
                 status: 409, 
-                message: `O nome de empresa "${company}" já está cadastrado com outro CNPJ. Por favor, use um nome diferente (ex: ${company} Filial) ou verifique o CNPJ.` 
+                message: `O nome de empresa "${company}" já está cadastrado no sistema (com outro CNPJ). Use um nome diferente (ex: ${company} Filial).` 
             };
         }
+        // Cria nova empresa
         companyRecord = await Company.create({
             name: company,
             taxId: cleanTaxId
         });
     }
 
-    // Lógica de Duplicidade de Usuário
+    // 3. Duplicidade de Usuário
     const duplicateError = await checkDuplicates(user, email);
     if (duplicateError) {
         throw { status: 409, message: duplicateError };
     }
 
-    // Criação do Usuário
+    // 4. Criação do Usuário (Senha temporária)
     const tempInternalPass = await bcrypt.hash("aguardando_ativacao_" + Date.now(), 10);
 
     const newUser = await User.create({
@@ -58,7 +67,7 @@ exports.registerUser = async ({ name, user, company, email, taxId }) => {
         password: tempInternalPass 
     });
 
-    // Token de Ativação
+    // 5. Token e Email
     const activationToken = jwt.sign(
         { id: newUser.id, purpose: 'activate_account' }, 
         process.env.JWT_SECRET,
@@ -69,24 +78,23 @@ exports.registerUser = async ({ name, user, company, email, taxId }) => {
     newUser.password = tokenHash;
     await newUser.save();
 
-    // Envio de E-mail
     try {
         await emailService.sendWelcomeTokenEmail(email, user, activationToken);
-        return { message: "Usuário cadastrado com sucesso! Convite enviado." };
+        return { message: "Cadastro realizado com sucesso! Um convite foi enviado para o e-mail." };
     } catch (mailError) {
-        console.error(mailError);
-        // Não jogamos erro aqui para não falhar o cadastro, mas avisamos
-        return { message: "Usuário criado, mas erro ao enviar e-mail.", warning: true };
+        console.error("Erro no envio de email:", mailError);
+        return { message: "Usuário cadastrado, mas houve erro ao enviar e-mail de ativação.", warning: true };
     }
 };
 
 exports.updateUser = async (targetId, requesterId, data) => {
     const { name, user, company, email, taxId } = data;
     
+    // Verifica existência
     const targetUser = await User.findByPk(targetId, { include: Company });
-    if (!targetUser) throw { status: 404, message: "Usuário não encontrado." };
+    if (!targetUser) throw { status: 404, message: `Usuário com ID ${targetId} não encontrado.` };
 
-    // Lógica de atualização de Empresa
+    // Lógica de Empresa (Restrita ao Admin/Dono)
     if (company || taxId) {
         const ownerUser = await User.findOne({
             where: { companyId: targetUser.companyId },
@@ -96,7 +104,7 @@ exports.updateUser = async (targetId, requesterId, data) => {
         if (ownerUser && String(ownerUser.id) !== String(requesterId)) {
             throw { 
                 status: 403, 
-                message: `Apenas o administrador principal (${ownerUser.name}) tem permissão para alterar o Nome da Empresa ou CNPJ.` 
+                message: "Permissão negada: Apenas o administrador principal da empresa pode alterar a Razão Social ou CNPJ." 
             };
         }
 
@@ -104,11 +112,11 @@ exports.updateUser = async (targetId, requesterId, data) => {
         const effectiveName = company || targetUser.Company.name;
 
         if (taxId && !isValidCNPJ(effectiveTaxId)) {
-            throw { status: 400, message: "CNPJ inválido." };
+            throw { status: 400, message: "O novo CNPJ informado é inválido." };
         }
 
+        // Verifica se CNPJ novo já existe em outra empresa
         const existingCompany = await Company.findOne({ where: { taxId: effectiveTaxId } });
-
         if (existingCompany && String(existingCompany.id) !== String(targetUser.companyId)) {
              throw { status: 409, message: `O CNPJ ${effectiveTaxId} já pertence a outra empresa cadastrada.` };
         }
@@ -119,10 +127,13 @@ exports.updateUser = async (targetId, requesterId, data) => {
         await userCompany.save();
     }
 
-    // Atualização do Usuário
-    targetUser.name = name || targetUser.name;
-    targetUser.user = user || targetUser.user;
-    targetUser.email = email || targetUser.email;
+    // Atualização de Usuário
+    if (name) targetUser.name = name;
+    if (user) targetUser.user = user;
+    if (email) {
+        if (!isValidEmail(email)) throw { status: 400, message: "Novo e-mail inválido." };
+        targetUser.email = email;
+    }
     
     await targetUser.save();
     return { message: "Dados atualizados com sucesso!" };
@@ -135,7 +146,7 @@ exports.authenticateUser = async (username, password) => {
     });
     
     if (!targetUser || !(await bcrypt.compare(password, targetUser.password))) {
-        throw { status: 401, message: "Credenciais inválidas." };
+        throw { status: 401, message: "Usuário ou senha incorretos." };
     }
 
     const payload = {
@@ -149,7 +160,9 @@ exports.authenticateUser = async (username, password) => {
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
-    return { token };
+    
+    // Retornamos o token e os dados do user para facilitar no Front/Postman
+    return { token, user: payload };
 };
 
 exports.deleteUser = async (targetId, requesterId) => {
@@ -158,10 +171,10 @@ exports.deleteUser = async (targetId, requesterId) => {
     }
 
     const targetUser = await User.findByPk(targetId);
-    if (!targetUser) throw { status: 404, message: "Usuário não encontrado" };
+    if (!targetUser) throw { status: 404, message: "Usuário não encontrado para exclusão." };
 
     await targetUser.destroy();
-    return { message: "Usuário deletado com sucesso" };
+    return { message: "Usuário deletado com sucesso." };
 };
 
 exports.getAllUsers = async () => {
@@ -170,7 +183,6 @@ exports.getAllUsers = async () => {
         include: Company
     });
     
-    // Formatação de dados
     return users.map(u => ({
         id: u.id,
         name: u.name,
@@ -187,11 +199,11 @@ exports.forgotPassword = async (email) => {
     const targetUser = await User.findOne({ where: { email } });
 
     if (!targetUser) {
-        throw { status: 404, message: "Usuário não encontrado." };
+        throw { status: 404, message: "Nenhum usuário encontrado com este e-mail." };
     }
 
     if (!process.env.JWT_SECRET) {
-        throw { status: 500, message: "Erro de configuração no servidor." };
+        throw { status: 500, message: "Erro de configuração no servidor (JWT_SECRET)." };
     }
 
     const resetToken = jwt.sign(
@@ -201,7 +213,7 @@ exports.forgotPassword = async (email) => {
 
     try {
         await emailService.sendResetTokenEmail(email, resetToken);
-        return { message: "Token enviado para o e-mail." };
+        return { message: "Token de recuperação enviado para o e-mail." };
     } catch (mailError) {
         throw { status: 500, message: "Erro ao conectar com servidor de e-mail." };
     }
@@ -209,7 +221,7 @@ exports.forgotPassword = async (email) => {
 
 exports.resetPassword = async (token, newPassword, confirmPassword) => {
     if (newPassword !== confirmPassword) {
-        throw { status: 400, message: "As senhas não coincidem." };
+        throw { status: 400, message: "A nova senha e a confirmação não coincidem." };
     }
 
     let decoded;
@@ -228,14 +240,14 @@ exports.resetPassword = async (token, newPassword, confirmPassword) => {
     targetUser.password = await bcrypt.hash(newPassword, salt);
     
     await targetUser.save();
-    return { message: "Senha atualizada com sucesso!" };
+    return { message: "Senha atualizada com sucesso! Agora você pode fazer login." };
 };
 
 exports.verifySessionUser = async (userId) => {
     if (!User) throw new Error("Model User não definido");
     
     const user = await User.findByPk(userId);
-    if (!user) throw { status: 401, message: "Usuário não existe mais." };
+    if (!user) throw { status: 401, message: "Sessão inválida: Usuário não existe mais." };
     
     return { id: user.id, name: user.name };
 };

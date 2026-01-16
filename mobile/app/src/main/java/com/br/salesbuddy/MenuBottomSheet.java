@@ -18,6 +18,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
+import com.br.salesbuddy.view.AuthenticationActivity;
+import com.br.salesbuddy.view.RegisterSalesActivity;
+
 public class MenuBottomSheet extends DialogFragment {
 
     private int userId;
@@ -95,7 +98,7 @@ public class MenuBottomSheet extends DialogFragment {
 
             btnOpcao1.setText("REGISTRAR VENDA");
             btnOpcao1.setOnClickListener(v -> {
-                Intent intent = new Intent(getActivity(), registersalesActivity.class);
+                Intent intent = new Intent(getActivity(), RegisterSalesActivity.class);
                 intent.putExtra("ID_DO_LOJISTA", userId);
                 startActivity(intent);
                 dismiss();
@@ -110,7 +113,7 @@ public class MenuBottomSheet extends DialogFragment {
         }
 
         btnLogout.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), authenticationActivity.class);
+            Intent intent = new Intent(getActivity(), AuthenticationActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             Toast.makeText(getActivity(), "Saiu com sucesso", Toast.LENGTH_SHORT).show();

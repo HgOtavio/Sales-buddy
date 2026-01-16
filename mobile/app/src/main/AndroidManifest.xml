@@ -17,19 +17,19 @@
             android:name=".reprocessingAcitivity"
             android:exported="false" />
         <activity
-            android:name=".FinalizationActivity"
+            android:name=".view.FinalizationActivity"
             android:exported="false" />
         <activity
-            android:name=".ConfirmDataActivity"
+            android:name=".view.ConfirmDataActivity"
             android:exported="false" />
         <activity
-            android:name=".registersalesActivity"
+            android:name=".view.RegisterSalesActivity"
             android:exported="false" />
         <activity
             android:name=".HomeActivity"
             android:exported="false" />
         <activity
-            android:name=".authenticationActivity"
+            android:name=".view.AuthenticationActivity"
             android:exported="false" />
         <activity
             android:name=".SplashActivity"

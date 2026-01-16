@@ -7,6 +7,8 @@ import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.br.salesbuddy.view.RegisterSalesActivity;
+
 public class HomeActivity extends AppCompatActivity {
 
     private Button btnRegisterSales, btnReprocess;
@@ -25,7 +27,7 @@ public class HomeActivity extends AppCompatActivity {
         ivTopIcon = findViewById(R.id.iv_top_icon);
 
         btnRegisterSales.setOnClickListener(v -> {
-            Intent intent = new Intent(HomeActivity.this, registersalesActivity.class);
+            Intent intent = new Intent(HomeActivity.this, RegisterSalesActivity.class);
             intent.putExtra("ID_DO_LOJISTA", userId);
             startActivity(intent);
         });

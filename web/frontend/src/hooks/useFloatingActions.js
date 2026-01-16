@@ -14,10 +14,38 @@ export function useFloatingActions(setActive, refreshUsers, editingUser, activeT
       const config = { headers: { Authorization: `Bearer ${token}` } };
 
       if (editingUser) {
-        await api.put(`/auth/users/${formData.id}`, formData, config);
+        // --- LÓGICA DE EDIÇÃO (PUT) ---
+        // CRIAMOS UM NOVO OBJETO PARA LIMPAR DADOS PROIBIDOS
+        // Copia os dados do form
+        const payload = { ...formData };
+
+        // REMOVE campos que o backend bloqueia (evita erro 403)
+        delete payload.company; 
+        delete payload.taxId;
+        delete payload.id;        // O ID já vai na URL
+        delete payload.createdAt; // Metadados não devem ser enviados
+        delete payload.updatedAt;
+        delete payload.password;  // Geralmente não se edita senha nessa rota (opcional)
+
+        // Envia apenas o que pode ser alterado (name, user, email)
+        await api.put(`/auth/users/${formData.id}`, payload, config);
         toast.success("Usuário atualizado com sucesso!");
+
       } else {
-        await api.post('/auth/register', formData, config);
+        // --- LÓGICA DE CADASTRO (POST) ---
+        // GARANTIMOS O NOME DAS CHAVES QUE O BACKEND ESPERA
+        const payload = {
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            company: formData.company,
+            // Verifica se o form usa 'user' ou 'username' e manda 'user'
+            user: formData.user || formData.username, 
+            // Verifica se o form usa 'taxId' ou 'cnpj' e manda 'taxId'
+            taxId: formData.taxId || formData.cnpj
+        };
+
+        await api.post('/auth/register', payload, config);
         toast.success("Usuário cadastrado com sucesso! Verifique o e-mail.");
       }
 
@@ -25,8 +53,16 @@ export function useFloatingActions(setActive, refreshUsers, editingUser, activeT
       refreshUsers();
 
     } catch (error) {
-      const msg = error.response?.data?.error ;
-      toast.error(msg);
+      // MELHORIA NA EXIBIÇÃO DO ERRO
+      // O backend agora manda { error: "Titulo", message: "Detalhe" }
+      // Tentamos pegar a mensagem detalhada primeiro
+      const title = error.response?.data?.error || "Erro";
+      const detail = error.response?.data?.message || "";
+      
+      // Exibe: "Dados Incompletos: O campo email é obrigatório"
+      toast.error(detail ? `${title}: ${detail}` : title);
+      
+      console.error("Erro na requisição:", error.response?.data);
     }
   }
 
@@ -48,12 +84,13 @@ export function useFloatingActions(setActive, refreshUsers, editingUser, activeT
         toast.success("Token enviado!");
       } catch (error) {
         console.error("Erro completo capturado no Front:", error.response || error);
-        const msg = error.response?.data?.error || "Erro ao solicitar reset";
+        
+        // Ajuste aqui também para pegar a mensagem melhor
+        const msg = error.response?.data?.message || error.response?.data?.error || "Erro ao solicitar reset";
         toast.error(msg);
       }
     }
   }
-
   
   const isAddDisabled = activeTab === "cadastro";
 

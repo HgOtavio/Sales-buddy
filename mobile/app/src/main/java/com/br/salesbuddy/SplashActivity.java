@@ -6,6 +6,8 @@ import android.os.Handler;
 import android.os.Looper;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.br.salesbuddy.view.AuthenticationActivity;
+
 public class SplashActivity extends AppCompatActivity {
 
     @Override
@@ -17,7 +19,7 @@ public class SplashActivity extends AppCompatActivity {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
 
             // 1. Cria a intenção de ir para o Login (authenticationActivity)
-            Intent intent = new Intent(SplashActivity.this, authenticationActivity.class);
+            Intent intent = new Intent(SplashActivity.this, AuthenticationActivity.class);
             startActivity(intent);
 
             finish();
