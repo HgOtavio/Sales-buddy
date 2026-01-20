@@ -1,13 +1,13 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/dbConfig');
 
-const SaleItem = sequelize.define('SaleItem', {
+const ReprocessingItem = sequelize.define('ReprocessingItem', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
     },
-    productName: { // Nome do produto no momento da venda
+    productName: { 
         type: DataTypes.STRING,
         allowNull: false
     },
@@ -16,15 +16,14 @@ const SaleItem = sequelize.define('SaleItem', {
         allowNull: false,
         defaultValue: 1
     },
-    unitPrice: { // Preço unitário
+    unitPrice: { 
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false
     },
-    totalItemPrice: { // (Qtd * Unitário) 
+    totalItemPrice: { 
         type: DataTypes.DECIMAL(10, 2),
         allowNull: true
     }
-   
 });
 
-module.exports = SaleItem;
+module.exports = ReprocessingItem;

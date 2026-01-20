@@ -4,19 +4,28 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
+    android:gravity="center_vertical"
     android:layout_marginBottom="16dp">
 
-    <EditText
-        android:id="@+id/etItem"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/layoutItem"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="0dp"
-        android:layout_height="50dp"
-        android:layout_marginEnd="8dp"
+        android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:background="@drawable/bg_input_border_blue"
-        android:hint="Nome do Item"
-        android:paddingStart="16dp"
-        android:textColor="#074A82"
-        android:textColorHint="#C0CDD8" />
+        android:layout_marginEnd="8dp"
+        app:boxStrokeColor="#074A82"
+        app:hintTextColor="#074A82"
+        android:hint="Nome do Item">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etItem"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#074A82"
+            android:inputType="textCapSentences" />
+
+    </com.google.android.material.textfield.TextInputLayout>
 
     <Button
         android:id="@+id/btn_action"
@@ -34,4 +43,5 @@
         app:iconPadding="0dp"
         app:iconSize="30dp"
         app:iconTint="#FFFFFF" />
+
 </LinearLayout>

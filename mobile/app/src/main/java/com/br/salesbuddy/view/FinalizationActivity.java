@@ -17,15 +17,20 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import com.br.salesbuddy.MenuBottomSheet;
 import com.br.salesbuddy.R;
 import com.br.salesbuddy.contract.FinalizationContract;
 import com.br.salesbuddy.presenter.FinalizationPresenter;
+import com.br.salesbuddy.view.adapter.ReceiptItemsAdapter;
+
+import java.util.List;
 
 public class FinalizationActivity extends AppCompatActivity implements FinalizationContract.View {
 
-    private TextView tvNome, tvCpf, tvEmail, tvItem, tvTotal, tvPago, tvTroco, tvVendaId;
+    private TextView tvNome, tvCpf, tvEmail, tvTotal, tvPago, tvTroco, tvVendaId;
+    private RecyclerView rvReceiptItems;
     private Button btnSim, btnNao;
     private ImageView btnMenu, btnBack;
 
@@ -55,7 +60,10 @@ public class FinalizationActivity extends AppCompatActivity implements Finalizat
         tvNome = findViewById(R.id.tvResumoNome);
         tvCpf = findViewById(R.id.tvResumoCpf);
         tvEmail = findViewById(R.id.tvResumoEmail);
-        tvItem = findViewById(R.id.tvResumoItem);
+
+        rvReceiptItems = findViewById(R.id.rvReceiptItems);
+        rvReceiptItems.setLayoutManager(new LinearLayoutManager(this));
+
         tvTotal = findViewById(R.id.tvResumoValor);
         tvPago = findViewById(R.id.tvResumoRecebido);
         tvTroco = findViewById(R.id.tvResumoTroco);
@@ -72,7 +80,7 @@ public class FinalizationActivity extends AppCompatActivity implements Finalizat
         btnBack.setOnClickListener(v -> presenter.onBackClicked());
 
         btnMenu.setOnClickListener(v -> {
-            MenuBottomSheet menu = MenuBottomSheet.newInstance(currentUserId, false);
+            MenuBottomSheetActivity menu = MenuBottomSheetActivity.newInstance(currentUserId, false);
             menu.show(getSupportFragmentManager(), "MenuBottomSheet");
         });
 
@@ -90,12 +98,15 @@ public class FinalizationActivity extends AppCompatActivity implements Finalizat
     }
 
     @Override
-    public void showReceiptData(String name, String cpf, String email, String item,
+    public void showReceiptData(String name, String cpf, String email, List<String> items,
                                 String total, String paid, String change, String saleId) {
         tvNome.setText(name);
         tvCpf.setText(cpf);
         tvEmail.setText(email);
-        tvItem.setText(item);
+
+        ReceiptItemsAdapter adapter = new ReceiptItemsAdapter(items);
+        rvReceiptItems.setAdapter(adapter);
+
         tvTotal.setText(total);
         tvPago.setText(paid);
         tvTroco.setText(change);
@@ -142,7 +153,6 @@ public class FinalizationActivity extends AppCompatActivity implements Finalizat
     @Override
     public void showEmailSuccessDialog(String email) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
 
         String mensagemHtml = "<font color='#074A82'> COMPROVANTE ENVIADO COM SUCESSO PARA O E-MAIL:</font> <br><br>" +
                 "<b><font color='#074A82'>" + email.toUpperCase() + "</font></b>";

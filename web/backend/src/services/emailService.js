@@ -1,6 +1,5 @@
 const nodemailer = require('nodemailer');
 
-// MANTENHA A SUA CONFIGURAÇÃO EXATAMENTE COMO ESTÁ
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: parseInt(process.env.EMAIL_PORT),
@@ -14,18 +13,14 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// ... (Suas funções sendWelcomeTokenEmail e sendResetTokenEmail continuam aqui) ...
 const sendWelcomeTokenEmail = async (email, user, token) => { /* ... seu código ... */ };
 const sendResetTokenEmail = async (email, token) => { /* ... seu código ... */ };
 
 
-//// src/services/emailService.js
 
 const sendSaleReceipt = async (email, saleData) => {
     
-    // CORREÇÃO AQUI:
-    // O Sequelize retorna 'saleItems', mas seu código antigo buscava 'items'.
-    // Adicionei uma proteção (|| []) para não quebrar se vier vazio.
+   
     const listaDeItens = saleData.saleItems || saleData.items || [];
 
     const itensHtml = listaDeItens.map(item => 
@@ -80,5 +75,5 @@ const sendSaleReceipt = async (email, saleData) => {
 module.exports = {
     sendWelcomeTokenEmail,
     sendResetTokenEmail,
-    sendSaleReceipt // <--- Adicionei aqui
+    sendSaleReceipt 
 };

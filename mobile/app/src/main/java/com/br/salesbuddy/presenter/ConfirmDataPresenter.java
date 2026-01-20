@@ -6,14 +6,19 @@ import android.os.Bundle;
 import com.br.salesbuddy.contract.ConfirmDataContract;
 import com.br.salesbuddy.model.SaleData;
 import com.br.salesbuddy.network.SalesService;
-import com.br.salesbuddy.utils.FormatUtils;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
 
-    private ConfirmDataContract.View view;
-    private SalesService service;
-    private SaleData currentSale;
-    private Context context;
+    private final ConfirmDataContract.View view;
+    private final SalesService service;
+    private final SaleData currentSale;
+    private final Context context;
 
     public ConfirmDataPresenter(ConfirmDataContract.View view, Context context) {
         this.view = view;
@@ -29,70 +34,95 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
             return;
         }
 
-        // 1. Extrair dados brutos
+        // 1. Extrair dados
         currentSale.userId = extras.getInt("ID_DO_LOJISTA", -1);
         currentSale.nome = extras.getString("NOME");
         currentSale.cpf = extras.getString("CPF");
         currentSale.email = extras.getString("EMAIL");
-        currentSale.item = extras.getString("ITEM");
 
-        // 2. Converter valores numéricos com segurança
+        // Pega a string bruta de itens (separada por vírgula)
+        String rawItems = extras.getString("ITENS_CONCATENADOS");
+        if (rawItems == null) rawItems = extras.getString("ITEM"); // Fallback
+        currentSale.item = rawItems;
+
+        // 2. Converter valores
         try {
-            String strVenda = extras.getString("VALOR_VENDA", "0").replace(",", ".");
-            String strReceb = extras.getString("VALOR_RECEBIDO", "0").replace(",", ".");
+            String strVenda = extras.getString("VALOR_VENDA", "0")
+                    .replace("R$", "").replace(".", "").replace(",", ".").trim();
+            String strReceb = extras.getString("VALOR_RECEBIDO", "0")
+                    .replace("R$", "").replace(".", "").replace(",", ".").trim();
 
             currentSale.valorVenda = Double.parseDouble(strVenda);
             currentSale.valorRecebido = Double.parseDouble(strReceb);
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
             currentSale.valorVenda = 0.0;
             currentSale.valorRecebido = 0.0;
         }
 
-        // 3. Lógica de Troco
+        // 3. Cálculos e Formatação
         double troco = currentSale.valorRecebido - currentSale.valorVenda;
         if (troco < 0) troco = 0.0;
 
-        // 4. Formatar para exibição
         String nomeDisplay = (currentSale.nome == null || currentSale.nome.isEmpty()) ? "Não informado" : currentSale.nome;
-        String cpfDisplay = (currentSale.cpf == null || currentSale.cpf.isEmpty()) ? "-" : currentSale.cpf; // Simplifiquei aqui caso não tenha FormatUtils
+        String cpfDisplay = (currentSale.cpf == null || currentSale.cpf.isEmpty()) ? "-" : currentSale.cpf;
         String emailDisplay = (currentSale.email == null || currentSale.email.isEmpty()) ? "-" : currentSale.email;
-        String itemDisplay = (currentSale.item == null || currentSale.item.isEmpty()) ? "Item Diverso" : currentSale.item;
 
-        // Tente usar FormatUtils se tiver, senão use String.format
-        String vendaFmt = "R$ " + String.format("%.2f", currentSale.valorVenda);
-        String recebidoFmt = "R$ " + String.format("%.2f", currentSale.valorRecebido);
-        String trocoFmt = "R$ " + String.format("%.2f", troco);
+        String vendaFmt = String.format(Locale.getDefault(), "R$ %.2f", currentSale.valorVenda);
+        String recebidoFmt = String.format(Locale.getDefault(), "R$ %.2f", currentSale.valorRecebido);
+        String trocoFmt = String.format(Locale.getDefault(), "R$ %.2f", troco);
 
-        // 5. Manda pra View
-        view.displayData(nomeDisplay, cpfDisplay, emailDisplay, itemDisplay, vendaFmt, recebidoFmt, trocoFmt);
+        // --- LÓGICA DE PROCESSAMENTO DOS ITENS ---
+        List<String> listaFormatada = processarItens(rawItems);
+
+        // 4. Envia para a View
+        view.displayData(nomeDisplay, cpfDisplay, emailDisplay, listaFormatada, vendaFmt, recebidoFmt, trocoFmt);
+    }
+
+    /**
+     * Transforma "Coxinha, Coxinha, Coca" em ["2x Coxinha", "1x Coca"]
+     */
+    private List<String> processarItens(String rawItems) {
+        List<String> resultado = new ArrayList<>();
+        if (rawItems == null || rawItems.isEmpty()) {
+            resultado.add("Venda Avulsa / Sem itens");
+            return resultado;
+        }
+
+        Map<String, Integer> contagem = new HashMap<>();
+        String[] itensArray = rawItems.split(",");
+
+        for (String item : itensArray) {
+            String nome = item.trim();
+            if (!nome.isEmpty()) {
+                contagem.put(nome, contagem.getOrDefault(nome, 0) + 1);
+            }
+        }
+
+        for (Map.Entry<String, Integer> entry : contagem.entrySet()) {
+            resultado.add(entry.getValue() + "x " + entry.getKey());
+        }
+        return resultado;
     }
 
     @Override
     public void confirmSale() {
         view.showLoading();
-
-        // AQUI ESTÁ A MUDANÇA CRUCIAL
         service.sendSale(context, currentSale, new SalesService.SalesCallback() {
             @Override
-            public void onSuccess(int idVenda) { // <--- Agora recebe o ID!
+            public void onSuccess(int idVenda) {
                 view.hideLoading();
-                view.showMessage("Venda Finalizada com Sucesso!");
+                view.showMessage("Venda Finalizada!");
 
                 Bundle finalBundle = new Bundle();
-
-                // 1. Passa o ID REAL (para o envio de e-mail)
                 finalBundle.putInt("ID_VENDA_REAL", idVenda);
-
-                // 2. Passa o ID DO LOJISTA (para o menu funcionar na próxima tela)
                 finalBundle.putInt("ID_DO_LOJISTA", currentSale.userId);
-
-                // 3. Dados visuais
                 finalBundle.putString("NOME", currentSale.nome);
                 finalBundle.putString("CPF", currentSale.cpf);
                 finalBundle.putString("EMAIL", currentSale.email);
-                finalBundle.putString("ITEM", currentSale.item);
                 finalBundle.putDouble("VALOR_VENDA", currentSale.valorVenda);
                 finalBundle.putDouble("VALOR_RECEBIDO", currentSale.valorRecebido);
+                double troco = currentSale.valorRecebido - currentSale.valorVenda;
+                finalBundle.putDouble("TROCO", troco < 0 ? 0.0 : troco);
 
                 view.navigateToFinalization(finalBundle);
             }
@@ -100,7 +130,7 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
             @Override
             public void onError(String message) {
                 view.hideLoading();
-                view.showError(message);
+                view.showError("Erro: " + message);
             }
         });
     }

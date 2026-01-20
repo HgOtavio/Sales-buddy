@@ -13,15 +13,8 @@
         android:layout_height="match_parent"
         android:scaleType="fitXY"
         android:src="@drawable/background"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-         />
+        tools:layout_editor_absoluteX="32dp"
+        tools:layout_editor_absoluteY="491dp" />
 
     <ImageView
         android:id="@+id/iv_auth_logo"
@@ -80,6 +73,10 @@
             android:textSize="18sp"
             android:textStyle="bold"
             app:cornerRadius="6dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
     </LinearLayout>
 

@@ -18,15 +18,11 @@ const conectarBanco = async () => {
         await sequelize.authenticate();
         console.log('✅ Conexão com banco de dados estabelecida.');
 
-        // IMPORTANTE:
-        // Apenas importamos o index.js. Ele já contém os Models e as Associações.
-        // Não precisamos redefinir hasMany/belongsTo aqui.
+     
         const { Company, User } = require('../models/index'); 
 
-        // Sincroniza as tabelas (Cria o que falta)
         await sequelize.sync({ alter: true }); 
 
-        // --- SEED (CRIAR ADMIN) ---
         const adminExists = await User.findOne({ where: { user: 'admin' } });
 
         if (!adminExists) {
@@ -49,11 +45,11 @@ const conectarBanco = async () => {
                 companyId: adminCompany.id
             });
 
-            console.log('🚀 SEED REALIZADO: Usuário Admin criado.');
+            console.log(' SEED REALIZADO: Usuário Admin criado.');
         }
 
     } catch (error) {
-        console.error('❌ Erro ao conectar:', error);
+        console.error(' Erro ao conectar:', error);
     }
 };
 
