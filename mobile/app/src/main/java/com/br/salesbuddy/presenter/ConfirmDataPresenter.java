@@ -43,11 +43,10 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
         // Pega a string bruta de itens e SALVA no objeto currentSale
         String rawItems = extras.getString("ITENS_CONCATENADOS");
         if (rawItems == null) rawItems = extras.getString("ITEM");
-        currentSale.item = rawItems; // <--- Aqui está salvo na memória
+        currentSale.item = rawItems;
 
         // 2. Converter valores
         try {
-            // Verifica se o valor vem como String (formatado) ou Double direto
             Object valVendaObj = extras.get("VALOR_VENDA");
             if (valVendaObj instanceof Double) {
                 currentSale.valorVenda = (Double) valVendaObj;
@@ -83,10 +82,8 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
         String recebidoFmt = String.format(Locale.getDefault(), "R$ %.2f", currentSale.valorRecebido);
         String trocoFmt = String.format(Locale.getDefault(), "R$ %.2f", troco);
 
-        // --- LÓGICA DE PROCESSAMENTO DOS ITENS ---
         List<String> listaFormatada = processarItens(currentSale.item);
 
-        // 4. Envia para a View
         view.displayData(nomeDisplay, cpfDisplay, emailDisplay, listaFormatada, vendaFmt, recebidoFmt, trocoFmt);
     }
 
@@ -122,7 +119,6 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
                 view.hideLoading();
                 view.showMessage("Venda Finalizada!");
 
-                // --- CRIAÇÃO DO PACOTE PARA A TELA FINAL ---
                 Bundle finalBundle = new Bundle();
                 finalBundle.putInt("ID_VENDA_REAL", idVenda);
                 finalBundle.putInt("ID_DO_LOJISTA", currentSale.userId);
@@ -130,15 +126,12 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
                 finalBundle.putString("CPF", currentSale.cpf);
                 finalBundle.putString("EMAIL", currentSale.email);
 
-                // Passa os valores já como Double para facilitar na outra tela
                 finalBundle.putDouble("VALOR_VENDA", currentSale.valorVenda);
                 finalBundle.putDouble("VALOR_RECEBIDO", currentSale.valorRecebido);
                 double troco = currentSale.valorRecebido - currentSale.valorVenda;
                 finalBundle.putDouble("TROCO", troco < 0 ? 0.0 : troco);
 
-
                 finalBundle.putString("ITENS_CONCATENADOS", currentSale.item);
-                // -----------------------------
 
                 view.navigateToFinalization(finalBundle);
             }
@@ -146,8 +139,23 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
             @Override
             public void onError(String message) {
                 view.hideLoading();
-                view.showError("Erro: " + message);
+
+                if (isNetworkError(message)) {
+                    view.navigateToConnectionError();
+                } else {
+                    view.showError(message);
+                }
             }
         });
+    }
+
+    private boolean isNetworkError(String msg) {
+        if (msg == null) return false;
+        String m = msg.toLowerCase();
+        return m.contains("unable to resolve host") ||
+                m.contains("timeout") ||
+                m.contains("connect") ||
+                m.contains("network") ||
+                m.contains("socket");
     }
 }

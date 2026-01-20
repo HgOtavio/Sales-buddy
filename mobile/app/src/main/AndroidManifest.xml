@@ -15,6 +15,9 @@
             android:name=".view.MenuBottomSheetActivity"
             android:exported="false"
             tools:ignore="Instantiatable" />
+        <activity
+            android:name=".view.ConnectionErrorActivity"
+            android:exported="false" />
 
         <activity
             android:name=".view.ReprocessingActivity"

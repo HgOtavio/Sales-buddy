@@ -126,6 +126,12 @@ public class ConfirmDataActivity extends AppCompatActivity implements ConfirmDat
     }
 
     @Override
+    public void navigateToConnectionError() {
+        Intent intent = new Intent(this, ConnectionErrorActivity.class);
+        startActivity(intent);
+    }
+
+    @Override
     public void showError(String error) {
         runOnUiThread(() ->
                 Toast.makeText(this, error, Toast.LENGTH_LONG).show()

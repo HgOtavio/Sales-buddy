@@ -8,16 +8,17 @@ public interface ReprocessingContract {
         void hideLoading();
         void showList(List<ReprocessSaleData> list);
         void showEmptyState();
+        void navigateToConnectionError();
         void showMessage(String message);
         void removeItemFromList(int id);
-        void clearList(); // NOVO
+        void clearList();
         void navigateBack();
     }
 
     interface Presenter {
         void loadPendingSales(int userId);
         void onItemClicked(int id);
-        void onReprocessAllClicked(); // NOVO
+        void onReprocessAllClicked();
         void onBackClicked();
     }
 }

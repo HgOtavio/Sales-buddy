@@ -16,7 +16,9 @@ public interface FinalizationContract {
         void navigateToNewSale(int userId);
         void closeActivity();
         void showEmailSuccessDialog(String email);
+        void navigateToConnectionError();
     }
+
 
     interface Presenter {
         void loadData(Bundle extras);

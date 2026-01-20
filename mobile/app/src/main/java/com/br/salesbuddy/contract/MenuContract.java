@@ -9,6 +9,7 @@ public interface MenuContract {
         void navigateToReprocess(int userId);
         void navigateToLogin();
         void showMessage(String message);
+        void navigateToConnectionError();
         void closeMenu();
     }
 

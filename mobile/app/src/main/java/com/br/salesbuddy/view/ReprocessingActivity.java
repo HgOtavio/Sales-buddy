@@ -1,6 +1,7 @@
 package com.br.salesbuddy.view;
 
 import android.app.Dialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -112,6 +113,12 @@ public class ReprocessingActivity extends AppCompatActivity implements Reprocess
     @Override
     public void showEmptyState() {
         Toast.makeText(this, "Lista vazia ou finalizada.", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void navigateToConnectionError() {
+        Intent intent = new Intent(this, ConnectionErrorActivity.class);
+        startActivity(intent);
     }
 
     @Override

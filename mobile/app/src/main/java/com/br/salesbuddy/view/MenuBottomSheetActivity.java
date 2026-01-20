@@ -136,6 +136,11 @@ public class MenuBottomSheetActivity extends DialogFragment implements MenuContr
     }
 
     @Override
+    public void navigateToConnectionError() {
+
+    }
+
+    @Override
     public void closeMenu() {
         dismiss();
     }

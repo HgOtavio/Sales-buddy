@@ -84,4 +84,10 @@ public class HomeActivity extends AppCompatActivity implements HomeContract.View
         MenuBottomSheetActivity menu = MenuBottomSheetActivity.newInstance(userId, false);
         menu.show(getSupportFragmentManager(), "MenuBottomSheet");
     }
+
+    @Override
+    public void navigateToConnectionError() {
+        Intent intent = new Intent(this, ConnectionErrorActivity.class);
+        startActivity(intent);
+    }
 }

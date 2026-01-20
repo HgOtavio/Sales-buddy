@@ -4,7 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 
 import com.br.salesbuddy.contract.FinalizationContract;
-import com.br.salesbuddy.network.SalesService; // Supondo que você tenha esse serviço
+import com.br.salesbuddy.network.SalesService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,13 +16,19 @@ public class FinalizationPresenter implements FinalizationContract.Presenter {
 
     private final FinalizationContract.View view;
     private final Context context;
-    private final SalesService service; // Serviço para enviar o email
+    private final SalesService service;
 
-    // Dados temporários para usar no envio de email/recibo
     private int saleId;
     private int userId;
-    private String clientEmail;
     private String clientName;
+    private String clientCpf;
+    private String clientEmail;
+
+    private double valVenda;
+    private double valRecebido;
+    private double troco;
+
+    private String rawItemsString;
 
     public FinalizationPresenter(FinalizationContract.View view, Context context) {
         this.view = view;
@@ -37,94 +43,108 @@ public class FinalizationPresenter implements FinalizationContract.Presenter {
             return;
         }
 
-        // 1. Extrair IDs e Dados Básicos
+        // Recupera o ID gerado na tela anterior
         this.saleId = extras.getInt("ID_VENDA_REAL", 0);
         this.userId = extras.getInt("ID_DO_LOJISTA", -1);
         this.clientName = extras.getString("NOME", "Não Informado");
-        String cpf = extras.getString("CPF", "-");
+        this.clientCpf = extras.getString("CPF", "-");
         this.clientEmail = extras.getString("EMAIL", "-");
 
-        // 2. Extrair Valores
-        double valVenda = extras.getDouble("VALOR_VENDA", 0.0);
-        double valRecebido = extras.getDouble("VALOR_RECEBIDO", 0.0);
-        double troco = extras.getDouble("TROCO", 0.0);
+        this.valVenda = extras.getDouble("VALOR_VENDA", 0.0);
+        this.valRecebido = extras.getDouble("VALOR_RECEBIDO", 0.0);
+        this.troco = extras.getDouble("TROCO", 0.0);
 
-        // 3. Formatar Strings
         String totalFmt = String.format(Locale.getDefault(), "R$ %.2f", valVenda);
         String pagoFmt = String.format(Locale.getDefault(), "R$ %.2f", valRecebido);
         String trocoFmt = String.format(Locale.getDefault(), "R$ %.2f", troco);
         String idFmt = (saleId != 0) ? "Venda n° " + saleId : "Venda processada";
 
-        // 4. Processar a Lista de Itens
-        // Tenta pegar a lista concatenada ou o item simples
-        String rawItems = extras.getString("ITENS_CONCATENADOS");
-        if (rawItems == null) rawItems = extras.getString("ITEM");
+        this.rawItemsString = extras.getString("ITENS_CONCATENADOS");
+        if (rawItemsString == null) rawItemsString = extras.getString("ITEM");
 
-        List<String> processedItems = processItemsList(rawItems);
+        List<String> processedItems = processItemsForDisplay(rawItemsString);
 
-        // 5. Enviar para a View
-        view.showReceiptData(clientName, cpf, clientEmail, processedItems, totalFmt, pagoFmt, trocoFmt, idFmt);
+        view.showReceiptData(clientName, clientCpf, clientEmail, processedItems, totalFmt, pagoFmt, trocoFmt, idFmt);
     }
 
-    /**
-     * Lógica que conta itens repetidos.
-     * Entrada: "Coxinha, Coxinha, Refri"
-     * Saída: ["2x Coxinha", "1x Refri"]
-     */
-    private List<String> processItemsList(String rawItems) {
+    private List<String> processItemsForDisplay(String rawItems) {
         List<String> result = new ArrayList<>();
         if (rawItems == null || rawItems.isEmpty()) {
-            result.add("Venda Avulsa / Sem descrição");
+            result.add("Venda Avulsa");
             return result;
         }
-
         Map<String, Integer> counts = new HashMap<>();
-        String[] splitItems = rawItems.split(",");
-
-        for (String s : splitItems) {
+        for (String s : rawItems.split(",")) {
             String name = s.trim();
-            if (!name.isEmpty()) {
-                counts.put(name, counts.getOrDefault(name, 0) + 1);
-            }
+            if (!name.isEmpty()) counts.put(name, counts.getOrDefault(name, 0) + 1);
         }
-
         for (Map.Entry<String, Integer> entry : counts.entrySet()) {
             result.add(entry.getValue() + "x " + entry.getKey());
         }
-
         return result;
     }
 
     @Override
     public void onSendEmailClicked() {
-        if (clientEmail == null || clientEmail.equals("-") || clientEmail.isEmpty()) {
-            view.showError("Cliente sem e-mail cadastrado nesta venda.");
+        if (clientEmail == null || clientEmail.equals("-") || clientEmail.isEmpty() || !clientEmail.contains("@")) {
+            view.showError("E-mail inválido ou não informado.");
             return;
         }
 
-        view.showLoading("Enviando comprovante...");
+        // Validação extra do ID
+        if (saleId == 0) {
+            view.showError("Erro: ID da venda inválido (0).");
+            return;
+        }
 
-        // Chamada ao serviço para enviar o e-mail (Ajuste conforme seu SalesService)
-        // Exemplo: service.sendReceiptEmail(saleId, email, callback...)
+        view.showLoading("Solicitando envio de e-mail...");
 
-        // --- SIMULAÇÃO DO ENVIO ---
-        new android.os.Handler().postDelayed(() -> {
-            view.hideLoading();
-            view.showEmailSuccessDialog(clientEmail);
-        }, 1500);
+        Map<String, Object> saleData = new HashMap<>();
+        // AQUI: Passamos o ID com o nome "id". O Service vai duplicar como "saleId" depois.
+        saleData.put("id", saleId);
+        saleData.put("clientName", clientName);
+        saleData.put("clientCpf", clientCpf);
+        saleData.put("email", clientEmail);
 
-        /* Se tiver o serviço real implementado:
-           service.sendReceipt(saleId, clientEmail, new SalesService.Callback() {
-               public void onSuccess() {
-                   view.hideLoading();
-                   view.showEmailSuccessDialog(clientEmail);
-               }
-               public void onError(String msg) {
-                   view.hideLoading();
-                   view.showError(msg);
-               }
-           });
-        */
+        saleData.put("saleValue", valVenda);
+        saleData.put("receivedValue", valRecebido);
+        saleData.put("change", troco);
+
+        List<Map<String, Object>> itemsList = new ArrayList<>();
+        if (rawItemsString != null && !rawItemsString.isEmpty()) {
+            Map<String, Integer> counts = new HashMap<>();
+            for (String s : rawItemsString.split(",")) {
+                String name = s.trim();
+                if (!name.isEmpty()) counts.put(name, counts.getOrDefault(name, 0) + 1);
+            }
+            for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+                Map<String, Object> itemObj = new HashMap<>();
+                itemObj.put("productName", entry.getKey());
+                itemObj.put("quantity", entry.getValue());
+                itemObj.put("unitPrice", 0.0);
+                itemsList.add(itemObj);
+            }
+        }
+        saleData.put("items", itemsList);
+
+        // PASSE O CONTEXT AQUI
+        service.requestReceiptEmail(context, saleData, new SalesService.SalesCallback() {
+            @Override
+            public void onSuccess(int id) {
+                view.hideLoading();
+                view.showEmailSuccessDialog(clientEmail);
+            }
+
+            @Override
+            public void onError(String message) {
+                view.hideLoading();
+                if (isNetworkError(message)) {
+                    view.navigateToConnectionError();
+                } else {
+                    view.showError("Falha ao enviar: " + message);
+                }
+            }
+        });
     }
 
     @Override
@@ -134,8 +154,12 @@ public class FinalizationPresenter implements FinalizationContract.Presenter {
 
     @Override
     public void onBackClicked() {
-        // Na tela final, voltar geralmente significa "Nova Venda" ou "Home"
-        // para evitar voltar para a tela de confirmação e duplicar a venda.
         view.navigateToNewSale(userId);
+    }
+
+    private boolean isNetworkError(String msg) {
+        if (msg == null) return false;
+        String m = msg.toLowerCase();
+        return m.contains("unable to resolve host") || m.contains("timeout") || m.contains("connect") || m.contains("network");
     }
 }

@@ -16,6 +16,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 
 public class SalesService {
 
@@ -24,6 +26,9 @@ public class SalesService {
         void onError(String message);
     }
 
+    // Ajuste aqui se for celular fisico ou emulador
+    private static final String BASE_URL = "http://10.0.2.2:3001";
+
     public void sendSale(Context context, SaleData sale, SalesCallback callback) {
         new Thread(() -> {
             HttpURLConnection conn = null;
@@ -31,17 +36,19 @@ public class SalesService {
                 SharedPreferences prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
                 String token = prefs.getString("salesToken", null);
 
-                URL url = new URL("http://10.0.2.2:3001/vendas");
+                URL url = new URL(BASE_URL + "/vendas");
 
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                conn.setRequestProperty("Accept", "application/json");
 
                 if (token != null) {
                     conn.setRequestProperty("Authorization", "Bearer " + token);
                 }
 
                 conn.setDoOutput(true);
+                conn.setConnectTimeout(10000);
 
                 JSONObject jsonVenda = new JSONObject();
                 jsonVenda.put("userId", sale.userId);
@@ -61,43 +68,96 @@ public class SalesService {
                 jsonVenda.put("items", arrayItens);
 
                 DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-                os.writeBytes(jsonVenda.toString());
+                os.write(jsonVenda.toString().getBytes("UTF-8"));
                 os.flush();
                 os.close();
 
                 int codigo = conn.getResponseCode();
 
                 if (codigo == 200 || codigo == 201) {
-                    InputStream responseStream = conn.getInputStream();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(responseStream));
-                    StringBuilder sb = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) sb.append(line);
+                    String response = lerStream(conn.getInputStream());
+                    JSONObject responseJson = new JSONObject(response);
 
-                    JSONObject responseJson = new JSONObject(sb.toString());
                     int idGerado = responseJson.optInt("saleId", -1);
+                    if(idGerado == -1) idGerado = responseJson.optInt("id", -1);
+                    if(idGerado == -1) idGerado = responseJson.optInt("insertId", 0);
 
-                    new Handler(Looper.getMainLooper()).post(() -> callback.onSuccess(idGerado));
+                    int finalIdGerado = idGerado;
+                    new Handler(Looper.getMainLooper()).post(() -> callback.onSuccess(finalIdGerado));
                 } else {
-                    String errorMsg = "Erro: " + codigo;
-                    try {
-                        InputStream errorStream = conn.getErrorStream();
-                        if (errorStream != null) {
-                            BufferedReader reader = new BufferedReader(new InputStreamReader(errorStream));
-                            StringBuilder sb = new StringBuilder();
-                            String line;
-                            while ((line = reader.readLine()) != null) sb.append(line);
-                            JSONObject jsonError = new JSONObject(sb.toString());
-                            if (jsonError.has("missing")) {
-                                errorMsg = jsonError.optString("message") + "\nFaltam: R$ " + jsonError.optString("missing");
-                            } else {
-                                errorMsg = jsonError.optString("message", jsonError.optString("error"));
-                            }
-                        }
-                    } catch (Exception e) {}
+                    String errorBody = lerStream(conn.getErrorStream());
+                    new Handler(Looper.getMainLooper()).post(() -> callback.onError("Erro API: " + codigo + " " + errorBody));
+                }
 
-                    final String msgFinal = errorMsg;
-                    new Handler(Looper.getMainLooper()).post(() -> callback.onError(msgFinal));
+            } catch (Exception e) {
+                e.printStackTrace();
+                new Handler(Looper.getMainLooper()).post(() -> callback.onError("Erro de Conexão: " + e.getMessage()));
+            } finally {
+                if (conn != null) conn.disconnect();
+            }
+        }).start();
+    }
+
+    // --- MÉTODO CORRIGIDO PARA ENVIAR 'saleId' ---
+    public void requestReceiptEmail(Context context, Map<String, Object> saleData, SalesCallback callback) {
+        new Thread(() -> {
+            HttpURLConnection conn = null;
+            try {
+                SharedPreferences prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
+                String token = prefs.getString("salesToken", null);
+
+                URL url = new URL(BASE_URL + "/vendas/email");
+
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                conn.setRequestProperty("Accept", "application/json");
+
+                if (token != null) {
+                    conn.setRequestProperty("Authorization", "Bearer " + token);
+                }
+
+                conn.setDoOutput(true);
+                conn.setConnectTimeout(15000);
+
+                JSONObject jsonBody = new JSONObject();
+
+                jsonBody.put("id", saleData.get("id"));
+                jsonBody.put("saleId", saleData.get("id"));
+
+
+                jsonBody.put("clientName", saleData.get("clientName"));
+                jsonBody.put("clientCpf", saleData.get("clientCpf"));
+                jsonBody.put("email", saleData.get("email"));
+                jsonBody.put("saleValue", saleData.get("saleValue"));
+                jsonBody.put("receivedValue", saleData.get("receivedValue"));
+                jsonBody.put("change", saleData.get("change"));
+
+                List<Map<String, Object>> itemsList = (List<Map<String, Object>>) saleData.get("items");
+                JSONArray jsonItems = new JSONArray();
+                if (itemsList != null) {
+                    for (Map<String, Object> itemMap : itemsList) {
+                        JSONObject itemJson = new JSONObject();
+                        itemJson.put("productName", itemMap.get("productName"));
+                        itemJson.put("quantity", itemMap.get("quantity"));
+                        itemJson.put("unitPrice", itemMap.get("unitPrice"));
+                        jsonItems.put(itemJson);
+                    }
+                }
+                jsonBody.put("items", jsonItems);
+
+                DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                os.write(jsonBody.toString().getBytes("UTF-8"));
+                os.flush();
+                os.close();
+
+                int codigo = conn.getResponseCode();
+
+                if (codigo == 200 || codigo == 201) {
+                    new Handler(Looper.getMainLooper()).post(() -> callback.onSuccess(0));
+                } else {
+                    String errorBody = lerStream(conn.getErrorStream());
+                    new Handler(Looper.getMainLooper()).post(() -> callback.onError("Erro Backend: " + codigo + " " + errorBody));
                 }
 
             } catch (Exception e) {
@@ -109,47 +169,16 @@ public class SalesService {
         }).start();
     }
 
-    public void dispararEmailBackend(Context context, int saleId, SalesCallback callback) {
-        new Thread(() -> {
-            HttpURLConnection conn = null;
-            try {
-                SharedPreferences prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
-                String token = prefs.getString("salesToken", null);
-
-                URL url = new URL("http://10.0.2.2:3001/vendas/email");
-
-                conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-
-                if (token != null) {
-                    conn.setRequestProperty("Authorization", "Bearer " + token);
-                }
-
-                conn.setDoOutput(true);
-
-                JSONObject json = new JSONObject();
-                json.put("saleId", saleId);
-
-                DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-                os.writeBytes(json.toString());
-                os.flush();
-                os.close();
-
-                int codigo = conn.getResponseCode();
-
-                if (codigo == 200 || codigo == 201) {
-                    new Handler(Looper.getMainLooper()).post(() -> callback.onSuccess(0));
-                } else {
-                    new Handler(Looper.getMainLooper()).post(() -> callback.onError("Erro Backend: " + codigo));
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                new Handler(Looper.getMainLooper()).post(() -> callback.onError("Falha na conexão: " + e.getMessage()));
-            } finally {
-                if (conn != null) conn.disconnect();
-            }
-        }).start();
+    private String lerStream(InputStream in) {
+        if (in == null) return "";
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) sb.append(line);
+            return sb.toString();
+        } catch (Exception e) {
+            return "";
+        }
     }
 }

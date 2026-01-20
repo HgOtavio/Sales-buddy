@@ -7,6 +7,7 @@ public interface LoginContract {
         void hideLoading();
         void showLoginError(String message);
         void onLoginSuccess(int userId, String userName);
+        void navigateToConnectionError();
     }
 
     // O que o Presenter (Lógica) precisa fazer

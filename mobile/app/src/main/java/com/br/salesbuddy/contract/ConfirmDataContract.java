@@ -11,6 +11,7 @@ public interface ConfirmDataContract {
         void displayData(String nome, String cpf, String email, List<String> items,
                          String valorVenda, String valorRecebido, String troco);
         void showMessage(String message);
+        void navigateToConnectionError();
         void showError(String error);
         void navigateToFinalization(Bundle finalData);
     }

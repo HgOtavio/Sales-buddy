@@ -60,4 +60,10 @@ public class AuthenticationActivity extends AppCompatActivity implements LoginCo
         startActivity(intent);
         finish();
     }
+
+    @Override
+    public void navigateToConnectionError() {
+        Intent intent = new Intent(this, ConnectionErrorActivity.class);
+        startActivity(intent);
+    }
 }

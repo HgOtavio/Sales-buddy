@@ -33,6 +33,13 @@ public class SplashActivity extends AppCompatActivity implements SplashContract.
     }
 
     @Override
+    public void navigateToConnectionError() {
+        Intent intent = new Intent(this, ConnectionErrorActivity.class);
+        startActivity(intent);
+
+    }
+
+    @Override
     protected void onDestroy() {
         presenter.destroy();
         super.onDestroy();

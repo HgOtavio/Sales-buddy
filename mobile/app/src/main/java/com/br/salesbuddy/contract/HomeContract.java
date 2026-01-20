@@ -6,6 +6,7 @@ public interface HomeContract {
         void navigateToRegisterSales(int userId);
         void navigateToReprocessing(int userId);
         void showMenu(int userId);
+        void navigateToConnectionError();
     }
 
     interface Presenter {

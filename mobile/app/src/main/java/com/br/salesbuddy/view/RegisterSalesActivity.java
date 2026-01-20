@@ -164,6 +164,12 @@ public class RegisterSalesActivity extends AppCompatActivity implements Register
     }
 
     @Override
+    public void navigateToConnectionError() {
+        Intent intent = new Intent(this, ConnectionErrorActivity.class);
+        startActivity(intent);
+    }
+
+    @Override
     public void navigateToConfirm(Bundle bundle) {
         Intent intent = new Intent(RegisterSalesActivity.this, ConfirmDataActivity.class);
         intent.putExtras(bundle);

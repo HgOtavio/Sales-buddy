@@ -8,6 +8,7 @@ public interface RegisterSalesContract {
         // UI Actions
         void setupMasks(); // Aplica as máscaras nos EditTexts
         void showInputError(String message);
+        void navigateToConnectionError();
 
         // Dynamic Items
         void addDynamicItemRow();

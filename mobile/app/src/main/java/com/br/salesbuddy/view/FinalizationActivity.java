@@ -193,4 +193,10 @@ public class FinalizationActivity extends AppCompatActivity implements Finalizat
             messageView.setTextSize(18);
         }
     }
+
+    @Override
+    public void navigateToConnectionError() {
+        Intent intent = new Intent(this, ConnectionErrorActivity.class);
+        startActivity(intent);
+    }
 }
