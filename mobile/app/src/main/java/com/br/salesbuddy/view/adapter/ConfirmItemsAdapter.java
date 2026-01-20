@@ -32,10 +32,8 @@ public class ConfirmItemsAdapter extends RecyclerView.Adapter<ConfirmItemsAdapte
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         String itemText = items.get(position);
 
-        // 1. Gera o ID visual baseado na posição da lista (0 -> 01, 1 -> 02)
         holder.tvItemIndex.setText(String.format(Locale.getDefault(), "%02d", position + 1));
 
-        // 2. Define o nome do produto
         holder.tvItemName.setText(itemText);
     }
 

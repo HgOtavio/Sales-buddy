@@ -4,38 +4,53 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:layout_marginBottom="16dp">
+    android:gravity="bottom"
+
+    android:layout_marginBottom="10dp">
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/layoutItem"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:paddingTop="8dp"
+
         android:layout_marginEnd="8dp"
+        app:hintEnabled="false"
+        android:layout_marginBottom="0dp"
         app:boxStrokeColor="#074A82"
         app:hintTextColor="#074A82"
-        android:hint="Nome do Item">
+
+
+        app:boxBackgroundColor="#FFFFFF"
+        app:boxCornerRadiusTopStart="4dp"
+        app:boxCornerRadiusTopEnd="4dp"
+        app:boxCornerRadiusBottomStart="4dp"
+        app:boxCornerRadiusBottomEnd="4dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etItem"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#074A82"
-            android:inputType="textCapSentences" />
+            android:background="@drawable/bg_lista_border"
+            android:hint="NOME CLIENTE"
+            android:inputType="textCapSentences"
+
+            android:textColor="#A32C65"
+            android:textColorHint="#C0CDD8" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
     <Button
         android:id="@+id/btn_action"
         android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_height="match_parent"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="2dp"
+        android:layout_marginEnd="12dp"
         android:backgroundTint="#A32C65"
-        android:insetLeft="0dp"
-        android:insetTop="0dp"
-        android:insetRight="0dp"
-        android:insetBottom="0dp"
+
         android:padding="0dp"
         app:cornerRadius="6dp"
         app:icon="@drawable/ic_plus"

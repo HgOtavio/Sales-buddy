@@ -232,6 +232,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"/>
                     </LinearLayout>
+
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rvResumoItens"
                         android:layout_width="match_parent"
@@ -327,29 +328,12 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="24dp"
                 android:layout_marginBottom="24dp">
 
                 <Button
-                    android:id="@+id/btnConfirmarEnvio"
-                    android:layout_width="163dp"
-                    android:layout_height="62dp"
-                    android:layout_marginEnd="24dp"
-                    android:text="FINALIZAR"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15dp"
-                    android:textStyle="bold"
-                    app:backgroundTint="#074A82"
-                    app:cornerRadius="6dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.884"
-                    app:layout_constraintStart_toEndOf="@+id/btnConfirmarEnvio2"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintVertical_bias="1.0" />
-
-                <Button
                     android:id="@+id/btnConfirmarEnvio2"
-                    android:layout_width="162dp"
+                    android:layout_width="0dp"
                     android:layout_height="64dp"
                     android:text="ALTERAR"
                     android:textColor="#FFFFFF"
@@ -357,12 +341,29 @@
                     android:textStyle="bold"
                     app:backgroundTint="#A32C65"
                     app:cornerRadius="6dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.144"
+                    android:layout_marginEnd="8dp"
+                    app:layout_constraintHorizontal_weight="1"
                     app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/btnConfirmarEnvio"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintVertical_bias="0.0" />
+                    app:layout_constraintBottom_toBottomOf="parent" />
+
+                <Button
+                    android:id="@+id/btnConfirmarEnvio"
+                    android:layout_width="0dp"
+                    android:layout_height="64dp"
+                    android:text="FINALIZAR"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15dp"
+                    android:textStyle="bold"
+                    app:backgroundTint="#074A82"
+                    app:cornerRadius="6dp"
+                    android:layout_marginStart="8dp"
+                    app:layout_constraintHorizontal_weight="1"
+                    app:layout_constraintStart_toEndOf="@+id/btnConfirmarEnvio2"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" />
 
                 <ImageView
                     android:layout_width="30dp"

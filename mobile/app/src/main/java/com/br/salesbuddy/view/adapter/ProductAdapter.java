@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.br.salesbuddy.R;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout; // Importante importar isso
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +41,13 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
+
+        // --- LÓGICA DO HINT DINÂMICO (ITEM 01, ITEM 02...) ---
+        // Pega a posição (0, 1, 2), soma 1 e formata com dois dígitos
+        String hintDinamico = String.format("ITEM %02d", position + 1);
+        holder.layoutItem.setHint(hintDinamico);
+        // -----------------------------------------------------
+
         // 1. Remove listener antigo
         if (holder.textWatcher != null) {
             holder.etItem.removeTextChangedListener(holder.textWatcher);
@@ -71,34 +79,24 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
     }
 
     private void setupButtonLogic(MaterialButton btn, int position, ViewHolder holder) {
-        // Proteção contra crash se o botão for nulo (caso o XML esteja errado)
         if (btn == null) return;
 
         boolean isLastItem = position == items.size() - 1;
 
-        // Limpa listeners antigos
         btn.setOnClickListener(null);
 
         if (isLastItem) {
-            // --- Botão ADICIONAR (+) (Último item) ---
             btn.setIconResource(R.drawable.ic_plus);
             btn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#A32C65"))); // Rosa
 
             btn.setOnClickListener(v -> {
-                int posAntiga = items.size() - 1; // Pega a posição desse item antes de adicionar o novo
-
-                items.add(""); // Adiciona nova linha vazia
-
-                // 1. Avisa que entrou um novo item no final
+                int posAntiga = items.size() - 1;
+                items.add("");
                 notifyItemInserted(items.size() - 1);
 
                 notifyItemChanged(posAntiga);
-
-                // (Opcional) Faz a lista rolar para o novo item
-                // if (context instanceof RecyclerView) ((RecyclerView)context).smoothScrollToPosition(items.size() - 1);
             });
         } else {
-            // --- Botão REMOVER (-) (Itens anteriores) ---
             btn.setIconResource(R.drawable.ic_minus);
             btn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#074A82"))); // Azul
 
@@ -107,7 +105,11 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
 
                 if (currentPos != RecyclerView.NO_POSITION && items.size() > currentPos) {
                     items.remove(currentPos);
+
+                    // Remove animação
                     notifyItemRemoved(currentPos);
+
+
                     notifyItemRangeChanged(currentPos, items.size());
                 }
             });
@@ -133,6 +135,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
+        // Adicionamos o layoutItem aqui para poder mudar o Hint
+        TextInputLayout layoutItem;
         TextInputEditText etItem;
         MaterialButton btnAction;
         TextWatcher textWatcher;
@@ -140,9 +144,10 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         @SuppressLint("WrongViewCast")
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+            // Vincula o Layout do Texto
+            layoutItem = itemView.findViewById(R.id.layoutItem);
             etItem = itemView.findViewById(R.id.etItem);
 
-            // Verificação de segurança para evitar NullPointerException
             View tempBtn = itemView.findViewById(R.id.btn_action);
             if (tempBtn instanceof MaterialButton) {
                 btnAction = (MaterialButton) tempBtn;

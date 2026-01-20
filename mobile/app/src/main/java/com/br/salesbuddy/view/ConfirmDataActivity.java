@@ -92,7 +92,6 @@ public class ConfirmDataActivity extends AppCompatActivity implements ConfirmDat
         });
     }
 
-    // --- MVP Implementation ---
 
     @Override
     public void showLoading() {

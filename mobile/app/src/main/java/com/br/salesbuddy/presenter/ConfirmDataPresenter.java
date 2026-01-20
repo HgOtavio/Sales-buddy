@@ -40,20 +40,32 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
         currentSale.cpf = extras.getString("CPF");
         currentSale.email = extras.getString("EMAIL");
 
-        // Pega a string bruta de itens (separada por vírgula)
+        // Pega a string bruta de itens e SALVA no objeto currentSale
         String rawItems = extras.getString("ITENS_CONCATENADOS");
-        if (rawItems == null) rawItems = extras.getString("ITEM"); // Fallback
-        currentSale.item = rawItems;
+        if (rawItems == null) rawItems = extras.getString("ITEM");
+        currentSale.item = rawItems; // <--- Aqui está salvo na memória
 
         // 2. Converter valores
         try {
-            String strVenda = extras.getString("VALOR_VENDA", "0")
-                    .replace("R$", "").replace(".", "").replace(",", ".").trim();
-            String strReceb = extras.getString("VALOR_RECEBIDO", "0")
-                    .replace("R$", "").replace(".", "").replace(",", ".").trim();
+            // Verifica se o valor vem como String (formatado) ou Double direto
+            Object valVendaObj = extras.get("VALOR_VENDA");
+            if (valVendaObj instanceof Double) {
+                currentSale.valorVenda = (Double) valVendaObj;
+            } else {
+                String strVenda = extras.getString("VALOR_VENDA", "0")
+                        .replace("R$", "").replace(".", "").replace(",", ".").trim();
+                currentSale.valorVenda = Double.parseDouble(strVenda);
+            }
 
-            currentSale.valorVenda = Double.parseDouble(strVenda);
-            currentSale.valorRecebido = Double.parseDouble(strReceb);
+            Object valRecebObj = extras.get("VALOR_RECEBIDO");
+            if (valRecebObj instanceof Double) {
+                currentSale.valorRecebido = (Double) valRecebObj;
+            } else {
+                String strReceb = extras.getString("VALOR_RECEBIDO", "0")
+                        .replace("R$", "").replace(".", "").replace(",", ".").trim();
+                currentSale.valorRecebido = Double.parseDouble(strReceb);
+            }
+
         } catch (Exception e) {
             currentSale.valorVenda = 0.0;
             currentSale.valorRecebido = 0.0;
@@ -72,15 +84,12 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
         String trocoFmt = String.format(Locale.getDefault(), "R$ %.2f", troco);
 
         // --- LÓGICA DE PROCESSAMENTO DOS ITENS ---
-        List<String> listaFormatada = processarItens(rawItems);
+        List<String> listaFormatada = processarItens(currentSale.item);
 
         // 4. Envia para a View
         view.displayData(nomeDisplay, cpfDisplay, emailDisplay, listaFormatada, vendaFmt, recebidoFmt, trocoFmt);
     }
 
-    /**
-     * Transforma "Coxinha, Coxinha, Coca" em ["2x Coxinha", "1x Coca"]
-     */
     private List<String> processarItens(String rawItems) {
         List<String> resultado = new ArrayList<>();
         if (rawItems == null || rawItems.isEmpty()) {
@@ -113,16 +122,23 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
                 view.hideLoading();
                 view.showMessage("Venda Finalizada!");
 
+                // --- CRIAÇÃO DO PACOTE PARA A TELA FINAL ---
                 Bundle finalBundle = new Bundle();
                 finalBundle.putInt("ID_VENDA_REAL", idVenda);
                 finalBundle.putInt("ID_DO_LOJISTA", currentSale.userId);
                 finalBundle.putString("NOME", currentSale.nome);
                 finalBundle.putString("CPF", currentSale.cpf);
                 finalBundle.putString("EMAIL", currentSale.email);
+
+                // Passa os valores já como Double para facilitar na outra tela
                 finalBundle.putDouble("VALOR_VENDA", currentSale.valorVenda);
                 finalBundle.putDouble("VALOR_RECEBIDO", currentSale.valorRecebido);
                 double troco = currentSale.valorRecebido - currentSale.valorVenda;
                 finalBundle.putDouble("TROCO", troco < 0 ? 0.0 : troco);
+
+
+                finalBundle.putString("ITENS_CONCATENADOS", currentSale.item);
+                // -----------------------------
 
                 view.navigateToFinalization(finalBundle);
             }
