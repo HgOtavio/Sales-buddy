@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,6 +51,7 @@ public class SalesService {
                 conn.setDoOutput(true);
                 conn.setConnectTimeout(10000);
 
+                // --- MONTAGEM DO JSON DA VENDA ---
                 JSONObject jsonVenda = new JSONObject();
                 jsonVenda.put("userId", sale.userId);
                 jsonVenda.put("clientName", sale.nome);
@@ -58,14 +60,48 @@ public class SalesService {
                 jsonVenda.put("saleValue", sale.valorVenda);
                 jsonVenda.put("receivedValue", sale.valorRecebido);
 
+                // --- CORREÇÃO AQUI: PROCESSAR ITENS ---
                 JSONArray arrayItens = new JSONArray();
-                JSONObject itemObj = new JSONObject();
-                String nomeItem = (sale.item == null || sale.item.isEmpty()) ? "Venda App" : sale.item;
-                itemObj.put("name", nomeItem);
-                itemObj.put("quantity", 1);
-                itemObj.put("price", sale.valorVenda);
-                arrayItens.put(itemObj);
+
+                if (sale.item != null && !sale.item.isEmpty()) {
+                    // 1. Mapa para contar duplicatas (Ex: "Coca, Coca" vira "Coca" -> 2)
+                    Map<String, Integer> contagem = new HashMap<>();
+                    String[] itensBrutos = sale.item.split(",");
+
+                    for (String s : itensBrutos) {
+                        String nomeLimpo = s.trim();
+                        if (!nomeLimpo.isEmpty()) {
+                            contagem.put(nomeLimpo, contagem.getOrDefault(nomeLimpo, 0) + 1);
+                        }
+                    }
+
+                    // 2. Cria os objetos JSON para cada item único
+                    for (Map.Entry<String, Integer> entry : contagem.entrySet()) {
+                        JSONObject itemObj = new JSONObject();
+                        itemObj.put("productName", entry.getKey()); // Use "productName" para alinhar com o backend
+                        itemObj.put("name", entry.getKey()); // Fallback caso seu backend use "name"
+                        itemObj.put("quantity", entry.getValue());
+
+                        // Como não temos preço unitário no mobile, enviamos 0 ou calculamos a média
+                        // O backend vai confiar no saleValue total
+                        itemObj.put("unitPrice", 0);
+
+                        arrayItens.put(itemObj);
+                    }
+                } else {
+                    // Caso não tenha itens (venda avulsa)
+                    JSONObject itemObj = new JSONObject();
+                    itemObj.put("productName", "Venda Avulsa");
+                    itemObj.put("quantity", 1);
+                    itemObj.put("unitPrice", sale.valorVenda);
+                    arrayItens.put(itemObj);
+                }
+
+                // Adiciona o array processado ao JSON principal
                 jsonVenda.put("items", arrayItens);
+                jsonVenda.put("saleItems", arrayItens); // Manda nos dois nomes por garantia
+
+                // ---------------------------------------------
 
                 DataOutputStream os = new DataOutputStream(conn.getOutputStream());
                 os.write(jsonVenda.toString().getBytes("UTF-8"));
@@ -98,8 +134,8 @@ public class SalesService {
         }).start();
     }
 
-    // --- MÉTODO CORRIGIDO PARA ENVIAR 'saleId' ---
     public void requestReceiptEmail(Context context, Map<String, Object> saleData, SalesCallback callback) {
+
         new Thread(() -> {
             HttpURLConnection conn = null;
             try {
@@ -124,11 +160,10 @@ public class SalesService {
 
                 jsonBody.put("id", saleData.get("id"));
                 jsonBody.put("saleId", saleData.get("id"));
-
-
                 jsonBody.put("clientName", saleData.get("clientName"));
                 jsonBody.put("clientCpf", saleData.get("clientCpf"));
                 jsonBody.put("email", saleData.get("email"));
+                jsonBody.put("clientEmail", saleData.get("email"));
                 jsonBody.put("saleValue", saleData.get("saleValue"));
                 jsonBody.put("receivedValue", saleData.get("receivedValue"));
                 jsonBody.put("change", saleData.get("change"));
@@ -138,8 +173,14 @@ public class SalesService {
                 if (itemsList != null) {
                     for (Map<String, Object> itemMap : itemsList) {
                         JSONObject itemJson = new JSONObject();
-                        itemJson.put("productName", itemMap.get("productName"));
-                        itemJson.put("quantity", itemMap.get("quantity"));
+                        Object pName = itemMap.get("productName");
+                        if(pName == null) pName = itemMap.get("name");
+
+                        Object pQtd = itemMap.get("quantity");
+                        if(pQtd == null) pQtd = itemMap.get("qtd");
+
+                        itemJson.put("productName", pName);
+                        itemJson.put("quantity", pQtd);
                         itemJson.put("unitPrice", itemMap.get("unitPrice"));
                         jsonItems.put(itemJson);
                     }

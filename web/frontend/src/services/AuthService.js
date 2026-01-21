@@ -1,14 +1,13 @@
 import api from './api'; 
-
 import { jwtDecode } from "jwt-decode"; 
+import { ENDPOINTS } from "./endpoints"; 
 
 const AuthService = {
   login: async (user, password) => {
     try {
-      console.log("1. Iniciando login no AuthService...");
-      console.log("2. Enviando dados:", { user, password });
+      
 
-      const response = await api.post("/auth/login", {
+      const response = await api.post(ENDPOINTS.AUTH.LOGIN, {
         user: user,
         password: password
       });
@@ -16,12 +15,10 @@ const AuthService = {
       console.log("3. Resposta recebida do servidor:", response);
 
       if (response.data.token) {
-        console.log("4. Token encontrado! Salvando...");
         localStorage.setItem("salesToken", response.data.token);
         
         try {
             const userData = jwtDecode(response.data.token);
-            console.log("5. Token decodificado com sucesso:", userData);
             localStorage.setItem("userData", JSON.stringify(userData));
         } catch (decodeError) {
             console.error("ERRO AO DECODIFICAR TOKEN:", decodeError);

@@ -1,16 +1,14 @@
-
 const express = require('express');
 const router = express.Router();
-const ReprocessingController = require('../controllers/ReprocessingController');
-
+const ReprocessingController = require('../controllers/reprocessingController'); 
 
 
 router.post('/', ReprocessingController.create);
 
 
-router.get('/:userId', ReprocessingController.list);
+router.post('/list', ReprocessingController.list);
 
 
-router.post('/:id/approve', ReprocessingController.approveAndMoveToSale);
+router.post('/approve', ReprocessingController.approveAndMoveToSale);
 
 module.exports = router;

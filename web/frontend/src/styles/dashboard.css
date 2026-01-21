@@ -1,5 +1,6 @@
-body,
-#root {
+/* --- CÓDIGO ORIGINAL (BASE DESKTOP) --- */
+
+body, #root {
   width: 100%;
   height: 100%;
   margin: 0;
@@ -9,10 +10,10 @@ body,
 .dashboard {
   width: 100vw;
   height: 100vh;
-  display: flex;
+  display: flex; /* Desktop: Lado a Lado */
   background-size: cover;
   background-position: center;
-  overflow: hidden;
+  overflow: hidden; /* Desktop: Sem rolagem no body, apenas no content */
 }
 
 .sidebar {
@@ -23,6 +24,7 @@ body,
   align-items: center;
   padding-top: 30px;
   flex-shrink: 0;
+  transition: all 0.3s ease; /* Suavidade ao mudar de tamanho */
 }
 
 .sidebar-logo {
@@ -30,38 +32,26 @@ body,
   margin-bottom: 40px;
 }
 
-/* --- AQUI ESTÁ A MÁGICA PARA NÃO PULAR --- */
 .menu-item {
   width: 100%;
-  
-  /* 1. Definimos uma altura fixa. 
-     Isso impede que o botão cresça quando o texto aumenta. */
   height: 50px; 
-  
-  /* 2. Removemos o padding vertical (top/bottom) 
-     porque o flexbox vai centralizar tudo na altura de 50px */
   padding: 0 24px 0 40px; 
-  
   display: flex;
-  align-items: center; /* Mantém ícone e texto centralizados verticalmente */
+  align-items: center; 
   gap: 12px;
-  
   color: #a32c65;
   font-size: 15px;
   cursor: pointer;
   box-sizing: border-box;
-  /* Sem transition para ser instantâneo */
 }
 
 .menu-item img {
   width: 20px;
-  /* Garante que o ícone não estique */
   flex-shrink: 0; 
 }
 
 .menu-item span {
   font-weight: 400;
-  /* Garante que o texto fique na linha correta */
   line-height: 1; 
 }
 
@@ -71,11 +61,10 @@ body,
 
 .menu-item.active span {
   color: #074a82;
-  font-size: 18px; /* Maior */
-  font-weight: 800; /* Mais gordo */
+  font-size: 18px; 
+  font-weight: 800; 
 }
 
-/* --- RESTANTE DO CÓDIGO --- */
 .content {
   flex: 1;
   width: 100%;
@@ -83,7 +72,7 @@ body,
   background: rgba(255, 255, 255, 0.6);
   border-radius: 6px;
   padding: 2%;
-  height: 100%; 
+  height: calc(100% - 24px); /* Ajuste para o margin: 12px (12 top + 12 bottom) */
   box-sizing: border-box;
   overflow-y: auto;
   position: relative;
@@ -105,4 +94,77 @@ body,
 .add-user-container {
   width: 100%;
   max-width: 920px;
+}
+
+/* =========================================
+   RESPONSIVIDADE (TABLETS E CELULARES)
+   Aplica-se quando a tela for menor que 768px
+   ========================================= */
+
+@media (max-width: 768px) {
+
+  .dashboard {
+    flex-direction: column; /* Muda de lado-a-lado para um em cima do outro */
+    height: 100vh; /* Mantém altura total */
+    overflow: hidden;
+  }
+
+  /* 1. Transformar Sidebar em Header (Barra Superior) */
+  .sidebar {
+    width: 100%;         /* Ocupa a largura toda */
+    height: auto;        /* Altura automática baseada no conteúdo */
+    min-height: 70px;    
+    flex-direction: row; /* Itens lado a lado */
+    padding: 10px 20px;  /* Padding menor */
+    justify-content: space-between; /* Espalha Logo e Menu */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Sombra para separar do conteúdo */
+    z-index: 10;
+  }
+
+  .sidebar-logo {
+    width: 100px;        /* Logo menor */
+    margin-bottom: 0;    /* Remove margem inferior */
+  }
+
+  /* 2. Ajustar os itens do menu para caberem na horizontal */
+  .menu-item {
+    width: auto;         /* Largura automática */
+    padding: 5px 10px;   /* Padding reduzido */
+    height: auto;        /* Altura flexível */
+    justify-content: center;
+  }
+  
+  /* Opcional: Esconder o texto do menu em telas MUITO pequenas e deixar só o ícone */
+  @media (max-width: 480px) {
+    .menu-item span {
+      display: none;
+    }
+    
+    /* Quando ativo no mobile, não aumentar fonte para não quebrar layout */
+    .menu-item.active span {
+       display: none; 
+    }
+  }
+
+  /* 3. Ajustar o container de conteúdo para ocupar a tela toda */
+  .content {
+    margin: 0;           /* Remove margens externas */
+    width: 100%;         /* Largura total */
+    height: 100%;        /* Ocupa o resto da altura */
+    border-radius: 0;    /* Remove bordas arredondadas (estranho em full screen) */
+    background: rgba(255, 255, 255, 0.85); /* Fundo um pouco mais sólido para leitura */
+    padding: 15px;       /* Padding interno confortável */
+  }
+
+  /* 4. Tabela ocupa 100% no mobile */
+  .table-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto; /* Permite rolagem lateral se a tabela for grande */
+  }
+  
+  /* Ajuste do container de adicionar usuário */
+  .add-user-container {
+    padding: 0 10px;
+  }
 }

@@ -1,9 +1,12 @@
+/* --- CSS ORIGINAL (BASE DESKTOP) --- */
+
 .add-user-container {
   width: 100%;
   max-width: 800px; 
-  margin: 0 ;
+  margin: 0 auto; /* Adicionei 'auto' para centralizar na tela se sobrar espaço */
   font-family: "Montserrat", sans-serif;
   padding-top: 20px;
+  box-sizing: border-box; /* Garante que padding não estoure a largura */
 }
 
 .add-user-header {
@@ -12,6 +15,7 @@
   gap: 15px; 
   margin-bottom: 40px;
   padding-bottom: 20px;
+  border-bottom: 1px solid #eee; /* Opcional: separação visual */
 }
 
 .header-icon {
@@ -39,7 +43,7 @@
   font-weight: 600;
   text-transform: uppercase;
   
-  width: 150px; 
+  width: 150px; /* Largura fixa no desktop */
   text-align: left; 
   margin-right: 20px; 
   flex-shrink: 0; 
@@ -56,9 +60,42 @@
   outline: none;
   box-shadow: 0px 2px 5px rgba(0,0,0,0.05);
   
-  flex: 1; 
+  flex: 1; /* Ocupa o resto do espaço no desktop */
+  width: 100%; /* Garante segurança */
 }
 
 .form-input:focus {
   border-color: #074a82;
+}
+
+
+/* --- RESPONSIVIDADE (MOBILE / TABLET) --- */
+/* Aplica essas regras quando a tela for menor que 768px */
+
+@media (max-width: 768px) {
+  
+  .add-user-container {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .form-group {
+    flex-direction: column; /* Muda de lado-a-lado para coluna (um em cima do outro) */
+    align-items: flex-start; /* Alinha tudo à esquerda */
+  }
+
+  .form-label {
+    width: 100%;        /* Ocupa a largura total */
+    margin-right: 0;    /* Remove a margem lateral */
+    margin-bottom: 8px; /* Adiciona espaço entre o label e o input */
+  }
+
+  .form-input {
+    width: 100%;       /* Input ocupa a largura total disponível */
+    box-sizing: border-box; /* Impede que o padding aumente a largura além de 100% */
+  }
+
+  .add-user-title {
+    font-size: 20px; /* Diminui um pouco o título no mobile */
+  }
 }

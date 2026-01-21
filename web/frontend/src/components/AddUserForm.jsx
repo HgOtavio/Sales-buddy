@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types"; 
-import { toast } from 'react-toastify';
+// import { toast } from 'react-toastify'; // Removido pois não será usado aqui
 import { maskCNPJ } from "../utils/masks"; 
 import "../styles/AddUserForm.css";
 import iconHeader from "../assets/icon-add-blue.svg"; 
@@ -31,8 +31,8 @@ export function AddUserForm({ userToEdit, onSubmit, formId }) {
   }, []);
   
 
-  useEffect(() => {
-    if (userToEdit) {
+useEffect(() => {
+    if (userToEdit && Object.keys(userToEdit).length > 0) {
       setFormData({
         user: userToEdit.user || "",
         name: userToEdit.name || "",
@@ -43,7 +43,8 @@ export function AddUserForm({ userToEdit, onSubmit, formId }) {
     } else {
       setFormData({ user: "", name: "", company: "", taxId: "", email: "" });
     }
-  }, [userToEdit]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(userToEdit), setFormData]);
 
   useEffect(() => {
     if (nameRef.current) {
@@ -59,49 +60,22 @@ export function AddUserForm({ userToEdit, onSubmit, formId }) {
 
   const handleKeyDown = (e, nextRef) => {
     if (e.key === "Enter") {
-      e.preventDefault();
       if (nextRef && nextRef.current) {
+        e.preventDefault();
         nextRef.current.focus();
-      } else {
-        handleSubmit(e);
-      }
+      } 
     }
   };
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
 
-    
+   
     if (!isReadyToSubmit.current) {
         return; 
     }
 
-    if (!formData.name) { 
-        toast.error("Preencha o Nome"); 
-        nameRef.current?.focus(); 
-        return; 
-    }
-    if (!formData.user) { 
-        toast.error("Preencha o Usuário"); 
-        userRef.current?.focus(); 
-        return; 
-    }
-    if (!formData.email) { 
-        toast.error("Preencha o E-mail"); 
-        emailRef.current?.focus(); 
-        return; 
-    }
-    if (!formData.company) { 
-        toast.error("Preencha a Empresa"); 
-        companyRef.current?.focus(); 
-        return; 
-    }
-    if (!formData.taxId) { 
-        toast.error("Preencha o CNPJ"); 
-        taxIdRef.current?.focus(); 
-        return; 
-    }
-
+  
     onSubmit({ ...formData, id: userToEdit?.id }); 
   };
 
@@ -182,7 +156,7 @@ export function AddUserForm({ userToEdit, onSubmit, formId }) {
                     className="form-input" 
                     value={formData.taxId} 
                     onChange={handleChange}
-                    onKeyDown={(e) => handleKeyDown(e, null)}
+                    onKeyDown={(e) => handleKeyDown(e, null)} 
                     placeholder="00.000.000/0000-00"
                     autoComplete="off"
                     maxLength={18}

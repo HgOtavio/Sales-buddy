@@ -10,12 +10,14 @@ exports.createNewSale = async (data) => {
             saleValue, receivedValue, items 
         } = data;
 
+        // Garante que são números para o cálculo
         const vSale = parseFloat(saleValue);
         const vReceived = parseFloat(receivedValue);
 
+        // Validação de Negócio: Pagamento insuficiente
         if (vReceived < vSale) {
             throw { 
-                status: 402, 
+                status: 402, // Payment Required
                 message: "Valor recebido insuficiente.", 
                 missing: (vSale - vReceived).toFixed(2) 
             };
@@ -23,6 +25,7 @@ exports.createNewSale = async (data) => {
 
         const calculatedChange = vReceived - vSale;
 
+        // 1. Cria a Venda
         const newSale = await Sale.create({
             userId,
             clientName,
@@ -33,14 +36,21 @@ exports.createNewSale = async (data) => {
             change: calculatedChange
         }, { transaction });
 
+        // 2. Cria os Itens da Venda
         if (items && Array.isArray(items) && items.length > 0) {
-            const itemList = items.map(item => ({
-                productName: typeof item === 'string' ? item : item.name,
-                unitPrice: item.price || 0,
-                quantity: item.quantity || 1,
-                totalItemPrice: (item.price || 0) * (item.quantity || 1),
-                saleId: newSale.id
-            }));
+            const itemList = items.map(item => {
+                const qtd = item.quantity || 1;
+                const price = item.price || 0; // O JSON usa 'price', o banco usa 'unitPrice'
+
+                return {
+                    saleId: newSale.id,
+                    // Aceita 'productName' (do JSON novo) ou 'name' (legado) ou o próprio item se for string
+                    productName: item.productName || item.name || (typeof item === 'string' ? item : "Produto sem nome"),
+                    quantity: qtd,
+                    unitPrice: price,
+                    totalItemPrice: price * qtd
+                };
+            });
 
             await SaleItem.bulkCreate(itemList, { transaction });
         }
@@ -50,7 +60,8 @@ exports.createNewSale = async (data) => {
         return { 
             saleId: newSale.id, 
             change: calculatedChange, 
-            status: "success" 
+            status: "success",
+            message: "Venda registrada com sucesso!"
         };
 
     } catch (error) {
@@ -67,7 +78,7 @@ exports.getSalesByUser = async (userId) => {
         include: [{ 
             model: SaleItem, 
             as: 'saleItems',
-            attributes: ['productName', 'unitPrice', 'quantity']
+            attributes: ['productName', 'unitPrice', 'quantity', 'totalItemPrice']
         }],
         order: [['createdAt', 'DESC']]
     });
@@ -77,6 +88,8 @@ exports.getSaleById = async (saleId) => {
     const sale = await Sale.findByPk(saleId, {
         include: [{ model: SaleItem, as: 'saleItems' }]
     });
-    if (!sale) throw { status: 404, message: "Sale not found" };
+    
+    if (!sale) throw { status: 404, message: "Venda não encontrada." };
+    
     return sale;
 };

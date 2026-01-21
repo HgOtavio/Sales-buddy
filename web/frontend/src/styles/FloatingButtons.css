@@ -1,3 +1,5 @@
+/* --- CSS ORIGINAL (MANTIDO) --- */
+
 .floating-buttons {
   position: fixed;
   bottom: 12px;
@@ -13,12 +15,19 @@
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  /* Adicionado para garantir transição suave */
+  transition: transform 0.2s; 
+}
+
+.action-group:active {
+  transform: scale(0.95);
 }
 
 .disabled-group {
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
+  filter: grayscale(100%);
 }
 
 .icon-outside {
@@ -74,9 +83,44 @@
   border: none;
   color: #707070;
 }
-.disabled-group {
-  opacity: 0.5;           
-  filter: grayscale(100%); 
-  cursor: not-allowed;    
-  pointer-events: none;    
+
+/* =========================================
+   RESPONSIVIDADE (CELULARES / TABLETS)
+   Aplica-se quando a tela for menor que 768px
+   ========================================= */
+
+@media (max-width: 768px) {
+  
+  .floating-buttons {
+    bottom: 20px;     /* Mais espaço da borda inferior */
+    right: 20px;
+    gap: 15px;        /* Reduz o espaço entre os botões */
+    flex-wrap: wrap-reverse; /* Se houver muitos botões, eles empilham para cima */
+    justify-content: flex-end;
+  }
+
+  /* 1. ESCONDER O TEXTO NO MOBILE */
+  /* Isso economiza muito espaço e limpa a tela */
+  .btn-text {
+    display: none; 
+  }
+
+  /* 2. REMOVER O GAP DO GRUPO */
+  /* Já que não tem texto, não precisa de espaço entre ícone e texto */
+  .action-group {
+    gap: 0;
+  }
+
+  /* 3. TRANSFORMAR ÍCONE EM BOTÃO REDONDO (FAB) */
+  .icon-outside {
+    width: 56px;      /* Aumenta o tamanho para toque (Padrão Material Design) */
+    height: 56px;
+    border-radius: 50%; /* Transforma quadrado em círculo */
+    box-shadow: 0 6px 10px rgba(0,0,0,0.3); /* Sombra mais forte para destacar */
+  }
+
+  .icon-outside img {
+    width: 24px;      /* Ícone interno um pouco maior */
+    height: 24px;
+  }
 }

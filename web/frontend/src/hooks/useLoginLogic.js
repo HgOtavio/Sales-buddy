@@ -5,8 +5,10 @@ import api from "../services/api";
 import { toast } from 'react-toastify';
 import { validateLoginInputs } from "../utils/loginValidator";
 
+import { ENDPOINTS } from "../services/endpoints"; 
+
 export function useLoginLogic() {
-  const [mode, setMode] = useState("login"); // "login" ou "reset"
+  const [mode, setMode] = useState("login");  
   const navigate = useNavigate();
 
   const handleLogin = async (user, password) => {
@@ -32,7 +34,8 @@ export function useLoginLogic() {
     }
 
     try {
-      await api.post('/auth/reset-password', data);
+      await api.post(ENDPOINTS.AUTH.RESET_PASSWORD, data);
+      
       toast.success("Senha definida! Faça login.");
       setMode("login");
     } catch (err) {

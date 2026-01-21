@@ -1,47 +1,20 @@
-import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../services/api";
-import "../styles/login.css"; // Reaproveita o CSS do login
+import React from "react";
+import { useResetPassword } from "../hooks/useResetPassword"; // <--- Importa o Hook criado
+import "../styles/login.css"; 
 import logo from "../assets/logo.svg";
 import background from "../assets/background.png";
-import { toast, ToastContainer } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 
 export default function ResetPassword() {
-  const [token, setToken] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  
-  const newPassRef = useRef(null);
-  const confirmPassRef = useRef(null);
-  const navigate = useNavigate();
-
-  async function handleReset() {
-    if (!token || !newPassword || !confirmPassword) {
-      toast.error("Preencha todos os campos.");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast.error("As senhas não coincidem.");
-      return;
-    }
-
-    try {
-      const response = await api.post('/auth/reset-password', {
-        token,
-        newPassword,
-        confirmPassword
-      });
-
-      toast.success(response.data.message || "Senha definida com sucesso!");
-      
-      setTimeout(() => navigate("/login"), 2000);
-
-    } catch (error) {
-      const msg = error.response?.data?.error || "Erro ao resetar senha.";
-      toast.error(msg);
-    }
-  }
+  const {
+    token, setToken,
+    newPassword, setNewPassword,
+    confirmPassword, setConfirmPassword,
+    newPassRef,
+    confirmPassRef,
+    handleReset,
+    navigate
+  } = useResetPassword();
 
   return (
     <div className="login-page" style={{ backgroundImage: `url(${background})` }}>
@@ -80,7 +53,7 @@ export default function ResetPassword() {
 
         <button onClick={handleReset}>Definir Senha</button>
 
-        <a href="#" onClick={() => navigate("/login")} className="forgot">
+        <a href="#" onClick={(e) => { e.preventDefault(); navigate("/login"); }} className="forgot">
           Voltar para o Login
         </a>
       </div>

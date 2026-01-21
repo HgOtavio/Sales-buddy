@@ -10,7 +10,6 @@ const {
 } = require('../utils/userHelpers');
 
 exports.registerUser = async ({ name, user, company, email, taxId }) => {
-    // 1. Limpeza e Validações de Formato
     const cleanTaxId = String(taxId).replace(/[^\d]+/g, '');
 
     if (!isValidEmail(email)) {
@@ -21,42 +20,34 @@ exports.registerUser = async ({ name, user, company, email, taxId }) => {
         throw { status: 400, message: `O CNPJ '${taxId}' informado não é válido.` };
     }
 
-    // 2. Lógica da Empresa (Verificação de conflitos de Nome vs CNPJ)
     let companyRecord = null;
     const companyByCnpj = await Company.findOne({ where: { taxId: cleanTaxId } });
     const companyByName = await Company.findOne({ where: { name: company } });
 
     if (companyByCnpj) {
-        // Se achou CNPJ, usamos essa empresa
         companyRecord = companyByCnpj;
         
-        // Verificação de segurança: Nome bate? (Opcional, mas bom para avisar)
         if (companyByName && companyByName.id !== companyByCnpj.id) {
-             // Caso raro: Nome existe em outra empresa diferente
              throw { status: 409, message: `Conflito: O CNPJ pertence à empresa ID ${companyByCnpj.id}, mas o nome '${company}' já é usado por outra empresa.` };
         }
     } else {
-        // Se o CNPJ é novo, o nome não pode existir
         if (companyByName) {
             throw { 
                 status: 409, 
                 message: `O nome de empresa "${company}" já está cadastrado no sistema (com outro CNPJ). Use um nome diferente (ex: ${company} Filial).` 
             };
         }
-        // Cria nova empresa
         companyRecord = await Company.create({
             name: company,
             taxId: cleanTaxId
         });
     }
 
-    // 3. Duplicidade de Usuário
     const duplicateError = await checkDuplicates(user, email);
     if (duplicateError) {
         throw { status: 409, message: duplicateError };
     }
 
-    // 4. Criação do Usuário (Senha temporária)
     const tempInternalPass = await bcrypt.hash("aguardando_ativacao_" + Date.now(), 10);
 
     const newUser = await User.create({
@@ -67,7 +58,6 @@ exports.registerUser = async ({ name, user, company, email, taxId }) => {
         password: tempInternalPass 
     });
 
-    // 5. Token e Email
     const activationToken = jwt.sign(
         { id: newUser.id, purpose: 'activate_account' }, 
         process.env.JWT_SECRET,
@@ -78,23 +68,19 @@ exports.registerUser = async ({ name, user, company, email, taxId }) => {
     newUser.password = tokenHash;
     await newUser.save();
 
-    try {
-        await emailService.sendWelcomeTokenEmail(email, user, activationToken);
-        return { message: "Cadastro realizado com sucesso! Um convite foi enviado para o e-mail." };
-    } catch (mailError) {
-        console.error("Erro no envio de email:", mailError);
-        return { message: "Usuário cadastrado, mas houve erro ao enviar e-mail de ativação.", warning: true };
-    }
+    emailService.sendWelcomeTokenEmail(email, user, activationToken)
+        .catch(err => console.error(" Erro ao enviar e-mail de boas-vindas (Background):", err));
+
+    return { message: "Cadastro realizado com sucesso! Um convite foi enviado para o e-mail." };
 };
 
 exports.updateUser = async (targetId, requesterId, data) => {
     const { name, user, company, email, taxId } = data;
     
-    // Verifica existência
     const targetUser = await User.findByPk(targetId, { include: Company });
     if (!targetUser) throw { status: 404, message: `Usuário com ID ${targetId} não encontrado.` };
 
-    // Lógica de Empresa (Restrita ao Admin/Dono)
+    // 1. Atualização de Empresa (Restrito ao Dono)
     if (company || taxId) {
         const ownerUser = await User.findOne({
             where: { companyId: targetUser.companyId },
@@ -115,7 +101,6 @@ exports.updateUser = async (targetId, requesterId, data) => {
             throw { status: 400, message: "O novo CNPJ informado é inválido." };
         }
 
-        // Verifica se CNPJ novo já existe em outra empresa
         const existingCompany = await Company.findOne({ where: { taxId: effectiveTaxId } });
         if (existingCompany && String(existingCompany.id) !== String(targetUser.companyId)) {
              throw { status: 409, message: `O CNPJ ${effectiveTaxId} já pertence a outra empresa cadastrada.` };
@@ -127,13 +112,28 @@ exports.updateUser = async (targetId, requesterId, data) => {
         await userCompany.save();
     }
 
-    // Atualização de Usuário
-    if (name) targetUser.name = name;
-    if (user) targetUser.user = user;
-    if (email) {
+    // 2. Validação de E-mail Duplicado (O FIX DO ERRO ANTERIOR)
+    if (email && email !== targetUser.email) {
         if (!isValidEmail(email)) throw { status: 400, message: "Novo e-mail inválido." };
+
+        const emailExists = await User.findOne({ where: { email } });
+        // Se existe alguém com esse email E não é o usuário atual
+        if (emailExists && emailExists.id !== targetUser.id) {
+            throw { status: 409, message: "Este e-mail já está em uso por outro usuário." };
+        }
         targetUser.email = email;
     }
+
+    // 3. Validação de Username Duplicado
+    if (user && user !== targetUser.user) {
+        const userExists = await User.findOne({ where: { user } });
+        if (userExists && userExists.id !== targetUser.id) {
+            throw { status: 409, message: "Este nome de usuário já está em uso." };
+        }
+        targetUser.user = user;
+    }
+
+    if (name) targetUser.name = name;
     
     await targetUser.save();
     return { message: "Dados atualizados com sucesso!" };
@@ -161,11 +161,12 @@ exports.authenticateUser = async (username, password) => {
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
     
-    // Retornamos o token e os dados do user para facilitar no Front/Postman
-    return { token, user: payload };
+    // Retorna apenas o token (o front decodifica)
+    return { token };
 };
 
 exports.deleteUser = async (targetId, requesterId) => {
+    // Impede suicídio da conta (opcional, mas recomendado)
     if (requesterId && String(requesterId) === String(targetId)) {
         throw { status: 403, message: "Você não pode deletar sua própria conta." };
     }
@@ -211,12 +212,10 @@ exports.forgotPassword = async (email) => {
         process.env.JWT_SECRET
     );
 
-    try {
-        await emailService.sendResetTokenEmail(email, resetToken);
-        return { message: "Token de recuperação enviado para o e-mail." };
-    } catch (mailError) {
-        throw { status: 500, message: "Erro ao conectar com servidor de e-mail." };
-    }
+    emailService.sendResetTokenEmail(email, resetToken)
+        .catch(err => console.error(" Erro ao enviar e-mail de reset (Background):", err));
+
+    return { message: "Token de recuperação enviado para o e-mail." };
 };
 
 exports.resetPassword = async (token, newPassword, confirmPassword) => {

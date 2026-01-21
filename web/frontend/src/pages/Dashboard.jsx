@@ -10,7 +10,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import { UsersTable } from "../components/UsersTable";
-import { SalesTable } from "../components/SalesTable"; 
+import { SalesTable } from "../components/salesTable"; 
 import { AddUserForm } from "../components/AddUserForm"; 
 import { SidebarItem } from "../components/SidebarItem";
 import { FloatingButtons } from "../components/FloatingButtons";
@@ -25,19 +25,16 @@ import salesIconBlue from "../assets/icon-sales-blue.svg";
 import background from "../assets/background.png";
 
 export default function Dashboard() {
-  // 1. Definição de Estados (SEMPRE NO TOPO)
   const [active, setActive] = useState("usuarios"); 
   const [editingUser, setEditingUser] = useState(null); 
-  const [receiptUrl, setReceiptUrl] = useState(null);
+  const [selectedSale, setSelectedSale] = useState(null);
   const [isLoading, setIsLoading] = useState(true); 
   
   const navigate = useNavigate();
 
-  // 2. Hooks Customizados (MOVIDOS PARA CIMA - ANTES DO RETURN)
-  // Eles precisam existir mesmo que o loading esteja true
   const { 
     users, 
-    selectedIds,
+    selectedIds, 
     selectedNames,
     isModalOpen,
     toggleSelection, 
@@ -54,14 +51,12 @@ export default function Dashboard() {
     isAddDisabled 
   } = useFloatingActions(setActive, refreshUsers, editingUser, active);
 
-  // 3. Funções Auxiliares
   const performLogout = () => {
     localStorage.removeItem('salesToken'); 
     localStorage.removeItem('userData');  
     navigate('/login');     
   };
 
-  // 4. Effects
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('salesToken');
@@ -96,8 +91,8 @@ export default function Dashboard() {
     handleGoToAdd(); 
   };
 
-  const handleViewReceipt = (url) => {
-    setReceiptUrl(url); 
+  const handleViewReceipt = (venda) => {
+    setSelectedSale(venda); 
   };
 
   if (isLoading) {
@@ -116,7 +111,6 @@ export default function Dashboard() {
     );
   }
 
-  // 6. Renderização Principal
   return (
     <div className="dashboard" style={{ backgroundImage: `url(${background})` }}>      
       <aside className="sidebar">
@@ -194,10 +188,10 @@ export default function Dashboard() {
       />
 
       <ConfirmationModal 
-          isOpen={!!receiptUrl} 
-          onClose={() => setReceiptUrl(null)} 
+          isOpen={!!selectedSale} 
+          onClose={() => setSelectedSale(null)} 
           variant="receipt"
-          receiptImageSrc={receiptUrl}
+          data={selectedSale} 
       />
 
       <ToastContainer 

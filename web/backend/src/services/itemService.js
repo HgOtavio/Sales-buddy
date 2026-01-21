@@ -1,22 +1,35 @@
-const { Item, Sale } = require('../models');
+const { Sale, SaleItem } = require('../models');
 
 exports.getItemsBySaleId = async (saleId) => {
-    const exists = await Sale.findByPk(saleId);
-    if (!exists) throw { status: 404, message: "Sale not found" };
+    // Verifica se a venda existe antes de buscar os itens
+    const saleExists = await Sale.findByPk(saleId);
+    if (!saleExists) {
+        throw { status: 404, message: "Venda não encontrada." };
+    }
 
-    return await Item.findAll({ where: { SaleId: saleId } });
+    // Busca os itens vinculados a essa venda
+    return await SaleItem.findAll({ 
+        where: { saleId },
+        attributes: ['id', 'productName', 'quantity', 'unitPrice', 'totalItemPrice']
+    });
 };
 
 exports.addItemToSale = async (saleId, itemData) => {
     const sale = await Sale.findByPk(saleId);
-    if (!sale) throw { status: 404, message: "Sale not found to add item" };
+    if (!sale) {
+        throw { status: 404, message: "Venda não encontrada para adicionar item." };
+    }
 
-    const newItem = await Item.create({
-        name: itemData.name,
-        price: itemData.price || 0,
-        SaleId: saleId
+    const quantity = itemData.quantity || 1;
+    const price = parseFloat(itemData.price || 0);
+
+    const newItem = await SaleItem.create({
+        saleId: sale.id,
+        productName: itemData.name, 
+        unitPrice: price,
+        quantity: quantity,
+        totalItemPrice: price * quantity
     });
 
-    
     return newItem;
 };

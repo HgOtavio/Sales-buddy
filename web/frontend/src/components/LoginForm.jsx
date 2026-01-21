@@ -23,7 +23,7 @@ export function LoginForm({ onLogin, onForgot }) {
       />
       <button onClick={() => onLogin(user, password)}>Entrar</button>
       <a href="#" className="forgot" onClick={e => { e.preventDefault(); onForgot(); }}>
-        Esqueci minha senha / Primeiro acesso
+        Esqueci minha senha
       </a>
     </>
   );

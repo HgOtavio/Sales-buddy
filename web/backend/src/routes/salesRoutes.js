@@ -5,11 +5,10 @@ const authMiddleware = require('../middlewares/auth');
 
 router.post('/', authMiddleware.verifyToken, saleController.createSale);
 
-
 router.post('/email', authMiddleware.verifyToken, saleController.sendReceipt);
 
 router.get('/', authMiddleware.verifyToken, saleController.getDashboard);
 
-router.get('/:id', authMiddleware.verifyToken, saleController.getSaleDetails);
+router.post('/details', authMiddleware.verifyToken, saleController.getSaleDetails);
 
 module.exports = router;

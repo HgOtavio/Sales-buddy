@@ -1,3 +1,4 @@
+/* --- Overlay (Fundo Escuro) --- */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -16,66 +17,84 @@
   justify-content: center;
   
   z-index: 2147483647 !important; 
+  padding: 15px; /* Adicionado padding para o modal não encostar na borda da tela */
+  box-sizing: border-box;
 }
 
 /* --- Estilo Padrão da Caixa (Delete) --- */
 .modal-box {
   background: white;
-  padding: 30px; /* Padding padrão para o modo delete */
+  padding: 30px; 
   border-radius: 10px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   text-align: center;
-  width: 350px;
+  
+  /* --- MUDANÇA RESPONSIVA AQUI --- */
+  width: 100%;       /* Ocupa a largura disponível... */
+  max-width: 380px;  /* ...mas trava em 380px no máximo */
+  /* ------------------------------- */
+
   font-family: "Montserrat", sans-serif;
-  max-height: 90vh; 
+  max-height: 90vh; /* Altura máxima de 90% da tela */
   display: flex;
   flex-direction: column;
   position: relative;
   z-index: 2147483648; 
+  
+  /* Garante barra de rolagem se o conteúdo for muito grande no celular */
+  overflow-y: auto; 
 }
 
 /* --- AJUSTES ESPECÍFICOS PARA O MODO COMPROVANTE --- */
 .modal-box.receipt-mode {
-  width: 400px; /* Um pouco mais largo para o papel */
-  padding: 0;   /* REMOVE o padding branco ao redor da imagem */
+  /* --- MUDANÇA RESPONSIVA AQUI --- */
+  width: 100%;       /* Fluído */
+  max-width: 450px;  /* Um pouco mais largo que o delete, mas com limite */
+  /* ------------------------------- */
+  
+  padding: 0; 
   background: white;
-  overflow: hidden; /* Garante que a imagem siga o border-radius */
+  overflow-x: hidden; /* Evita rolagem lateral */
 }
 
-/* Conteúdo da Imagem (Sem fundo cinza, sem margem) */
+/* Conteúdo da Imagem / Papel do Recibo */
 .receipt-content {
-  background: transparent; /* Remove o cinza */
-  padding: 0;              /* Remove o espaçamento interno */
-  margin: 0;               /* Remove margem */
+  background: transparent; 
+  padding: 0;              
+  margin: 0;               
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
 }
 
+/* Ajuste do container amarelo (caso esteja usando html) ou imagem */
+#receipt-capture-area {
+  max-width: 100% !important; /* Garante que o amarelo não estoure */
+  box-sizing: border-box;
+}
+
 .receipt-content img {
   width: 100%;
   height: auto;
-  max-height: 70vh; /* Limita a altura para não estourar a tela */
+  max-height: 65vh; /* Diminuí um pouco para sobrar espaço pros botões no mobile */
   object-fit: contain;
   display: block;
 }
 
-/* Área dos botões dentro do comprovante precisa de padding, 
-   já que tiramos do container principal */
+/* Área dos botões dentro do comprovante */
 .modal-box.receipt-mode .modal-actions {
   padding: 15px;
-  background-color: white; /* Garante fundo branco nos botões */
-  border-top: 1px solid #eee; /* Uma linha sutil separando a imagem dos botões */
+  background-color: white; 
+  border-top: 1px solid #eee; 
 }
 
-/* --- Fim dos ajustes do comprovante --- */
-
+/* --- Títulos e Textos --- */
 .modal-box h3 {
   margin-top: 0;
   color: #074A82; 
   margin-bottom: 15px;
-  font-size: 16px;
+  font-size: 16px; /* Pode usar clamp() se quiser mais moderno, ex: clamp(14px, 4vw, 16px) */
   font-weight: 700;
   text-align: center; 
 }
@@ -97,16 +116,19 @@
   color: #A32C2C; 
 }
 
+/* --- Botões --- */
 .modal-actions {
   display: flex;
   justify-content: center;
   gap: 10px;
   margin-top: auto;
+  flex-wrap: wrap; /* Permite que os botões quebrem linha se a tela for muito pequena */
 }
 
 .btn-modal {
-  padding: 10px 0; 
-  flex: 1;
+  padding: 12px 0; /* Aumentei um pouco a área de toque para mobile */
+  flex: 1;         /* Tenta ocupar espaço igual */
+  min-width: 80px; /* Tamanho mínimo para não ficar inlegível */
   border: none;
   border-radius: 5px;
   font-family: "Montserrat", sans-serif;
@@ -121,14 +143,33 @@
   opacity: 0.9;
 }
 
-.btn-green {
-  background-color: #074A82; 
-}
+.btn-green { background-color: #074A82; }
+.btn-red { background-color: #A32C2C; }
+.btn-blue { background-color: #074A82; }
 
-.btn-red {
-  background-color: #A32C2C; 
-}
 
-.btn-blue {
-  background-color: #074A82;
+/* --- MEDIA QUERY PARA CELULARES PEQUENOS (ex: iPhone SE, Galaxy S antigo) --- */
+@media (max-width: 480px) {
+  .modal-box {
+    padding: 20px; /* Reduz padding interno para ganhar espaço */
+    max-height: 95vh;
+  }
+  
+  .modal-box.receipt-mode .modal-actions {
+    padding: 10px; /* Reduz padding dos botões no recibo */
+  }
+
+  /* Se tiver 3 botões (Salvar, Imprimir, Fechar), coloca um embaixo do outro no celular */
+  .modal-box.receipt-mode .modal-actions {
+     flex-direction: column; 
+  }
+  
+  .btn-modal {
+    width: 100%; /* Botão ocupa a largura toda */
+    margin-bottom: 5px; /* Espaço entre eles se ficarem em coluna */
+  }
+
+  .modal-box h3 {
+    font-size: 15px;
+  }
 }

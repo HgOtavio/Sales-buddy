@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from 'react-toastify'; 
 import api from "../services/api";
-
+import { ENDPOINTS } from "../services/endpoints"; 
 export function useUsers() {
   const [users, setUsers] = useState([]); 
   const [selectedIds, setSelectedIds] = useState([]); 
@@ -10,16 +10,12 @@ export function useUsers() {
 
   const refreshUsers = useCallback(async () => {
     try {
-      const token = localStorage.getItem('salesToken');
-      if (!token) return;
-
-      const response = await api.get('/auth/users', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get(ENDPOINTS.AUTH.USERS);
 
       setUsers(response.data);
     } catch (error) {
       console.error("Erro ao carregar usuários:", error);
+     toast.error("Erro ao carregar lista de usuários");
     } finally {
       setLoading(false);
     }
@@ -53,7 +49,6 @@ export function useUsers() {
 
   async function confirmDelete() {
     try {
-      const token = localStorage.getItem('salesToken');
       const userData = JSON.parse(localStorage.getItem('userData'));
       const meuId = userData?.id;
 
@@ -63,10 +58,8 @@ export function useUsers() {
         return;
       }
 
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-
       await Promise.all(selectedIds.map(id => 
-          api.delete(`/auth/users/${id}`, config)
+          api.delete(`${ENDPOINTS.AUTH.USERS}/${id}`)
       ));
 
       toast.success("Usuário(s) excluído(s) com sucesso!");
@@ -76,7 +69,8 @@ export function useUsers() {
 
     } catch (error) {
         console.error(error);
-        toast.error("Erro ao excluir. Tente novamente.");
+        const msg = error.response?.data?.error || "Erro ao excluir. Tente novamente.";
+        toast.error(msg);
         setIsModalOpen(false);
     }
   }

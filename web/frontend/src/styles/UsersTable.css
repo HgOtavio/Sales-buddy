@@ -1,9 +1,9 @@
+/* --- CÓDIGO ORIGINAL (MANTIDO INTACTO) --- */
 table {
   width: 95%; 
   margin-left: 1px; 
   border-collapse: collapse;
   table-layout: fixed; 
-  
 }
 
 thead th {
@@ -25,32 +25,12 @@ tbody td {
   font-size: 13px; 
 }
 
-
-th:nth-child(1), td:nth-child(1) {
-  width: 5%;
-}
-
-th:nth-child(2), td:nth-child(2) {
-  width: 15%;
-  padding-right: 15px;
- 
-}
-
-th:nth-child(3), td:nth-child(3) {
-  width: 15%;
-  padding-right: 15px;
-}
-
-th:nth-child(4), td:nth-child(4) {
-  width: 15%;
-  padding-right: 15px;
-}
-
-th:nth-child(5), td:nth-child(5) {
-  width: 15%;
-}
-
-
+/* Larguras originais para Desktop */
+th:nth-child(1), td:nth-child(1) { width: 5%; }
+th:nth-child(2), td:nth-child(2) { width: 15%; padding-right: 15px; }
+th:nth-child(3), td:nth-child(3) { width: 15%; padding-right: 15px; }
+th:nth-child(4), td:nth-child(4) { width: 15%; padding-right: 15px; }
+th:nth-child(5), td:nth-child(5) { width: 15%; }
 
 .td-user {
   color: #074a82;
@@ -67,13 +47,10 @@ th:nth-child(5), td:nth-child(5) {
   padding-right: 100%;
 }
 
-
 .status-box {
   width: 16px;
   height: 16px;
-  
   border: 1px solid #B0B0B0; 
-  
   border-radius: 4px;
   background-color: transparent;
   cursor: pointer;
@@ -96,4 +73,34 @@ th:nth-child(5), td:nth-child(5) {
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
   margin-bottom: 2px;
+}
+
+/* =======================================================
+   RESPONSIVIDADE (ADICIONADO NO FINAL)
+   Isso garante que a tabela não quebre no celular
+   ======================================================= */
+
+@media (max-width: 768px) {
+  table {
+    display: block;      /* Permite rolagem na própria tabela */
+    overflow-x: auto;    /* Ativa rolagem horizontal */
+    white-space: nowrap; /* Mantém linhas retas */
+    table-layout: auto;  /* Destrava a largura das colunas */
+    width: 100%;
+  }
+
+  /* Remove as larguras fixas (%) no celular para o texto caber */
+  th:nth-child(n), 
+  td:nth-child(n) {
+    width: auto;         /* Largura automática baseada no texto */
+    min-width: 120px;    /* Garante um tamanho mínimo para leitura */
+    padding-right: 20px; /* Espaço seguro entre colunas */
+  }
+
+  /* Ajuste específico para a coluna do checkbox (primeira) */
+  th:nth-child(1), 
+  td:nth-child(1) {
+    min-width: 40px;     /* Checkbox não precisa ser largo */
+    width: 40px;
+  }
 }

@@ -1,6 +1,5 @@
 // middlewares/serverMiddleware.js
 
-// 1. Verifica se o JSON tem erro de sintaxe (vírgula a mais, aspas a menos)
 const handleJsonSyntaxError = (err, req, res, next) => {
     if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
         return res.status(400).json({ 
@@ -11,9 +10,7 @@ const handleJsonSyntaxError = (err, req, res, next) => {
     next();
 };
 
-// 2. Verifica se a URL tem espaços em branco no final (%20)
 const handleUrlErrors = (req, res, next) => {
-    // Verifica se a URL contém espaço encoded (%20) ou espaço físico no final
     if (req.originalUrl.includes('%20') || req.originalUrl.endsWith(' ')) {
         return res.status(400).json({ 
             error: "URL Mal Formatada",
@@ -23,7 +20,6 @@ const handleUrlErrors = (req, res, next) => {
     next();
 };
 
-// 3. Trata rotas que não existem (404)
 const handle404 = (req, res) => {
     res.status(404).json({ 
         error: "Rota não encontrada", 
