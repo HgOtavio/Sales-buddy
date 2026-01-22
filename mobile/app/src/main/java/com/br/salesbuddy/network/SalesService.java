@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.br.salesbuddy.BuildConfig;
 import com.br.salesbuddy.model.SaleData;
 
 import org.json.JSONArray;
@@ -23,12 +24,11 @@ import java.util.Map;
 public class SalesService {
 
     public interface SalesCallback {
-        void onSuccess(int idVenda);
+        void onSuccess(long idVenda);
         void onError(String message);
     }
 
-    // Ajuste aqui se for celular fisico ou emulador
-    private static final String BASE_URL = "http://10.0.2.2:3001";
+    private static final String BASE_URL = BuildConfig.BASE_URL;
 
     public void sendSale(Context context, SaleData sale, SalesCallback callback) {
         new Thread(() -> {
@@ -51,7 +51,6 @@ public class SalesService {
                 conn.setDoOutput(true);
                 conn.setConnectTimeout(10000);
 
-                // --- MONTAGEM DO JSON DA VENDA ---
                 JSONObject jsonVenda = new JSONObject();
                 jsonVenda.put("userId", sale.userId);
                 jsonVenda.put("clientName", sale.nome);
@@ -60,11 +59,9 @@ public class SalesService {
                 jsonVenda.put("saleValue", sale.valorVenda);
                 jsonVenda.put("receivedValue", sale.valorRecebido);
 
-                // --- CORREÇÃO AQUI: PROCESSAR ITENS ---
                 JSONArray arrayItens = new JSONArray();
 
                 if (sale.item != null && !sale.item.isEmpty()) {
-                    // 1. Mapa para contar duplicatas (Ex: "Coca, Coca" vira "Coca" -> 2)
                     Map<String, Integer> contagem = new HashMap<>();
                     String[] itensBrutos = sale.item.split(",");
 
@@ -75,21 +72,16 @@ public class SalesService {
                         }
                     }
 
-                    // 2. Cria os objetos JSON para cada item único
                     for (Map.Entry<String, Integer> entry : contagem.entrySet()) {
                         JSONObject itemObj = new JSONObject();
-                        itemObj.put("productName", entry.getKey()); // Use "productName" para alinhar com o backend
-                        itemObj.put("name", entry.getKey()); // Fallback caso seu backend use "name"
+                        itemObj.put("productName", entry.getKey());
+                        itemObj.put("name", entry.getKey());
                         itemObj.put("quantity", entry.getValue());
-
-                        // Como não temos preço unitário no mobile, enviamos 0 ou calculamos a média
-                        // O backend vai confiar no saleValue total
                         itemObj.put("unitPrice", 0);
 
                         arrayItens.put(itemObj);
                     }
                 } else {
-                    // Caso não tenha itens (venda avulsa)
                     JSONObject itemObj = new JSONObject();
                     itemObj.put("productName", "Venda Avulsa");
                     itemObj.put("quantity", 1);
@@ -97,11 +89,8 @@ public class SalesService {
                     arrayItens.put(itemObj);
                 }
 
-                // Adiciona o array processado ao JSON principal
                 jsonVenda.put("items", arrayItens);
-                jsonVenda.put("saleItems", arrayItens); // Manda nos dois nomes por garantia
-
-                // ---------------------------------------------
+                jsonVenda.put("saleItems", arrayItens);
 
                 DataOutputStream os = new DataOutputStream(conn.getOutputStream());
                 os.write(jsonVenda.toString().getBytes("UTF-8"));
@@ -114,11 +103,11 @@ public class SalesService {
                     String response = lerStream(conn.getInputStream());
                     JSONObject responseJson = new JSONObject(response);
 
-                    int idGerado = responseJson.optInt("saleId", -1);
-                    if(idGerado == -1) idGerado = responseJson.optInt("id", -1);
-                    if(idGerado == -1) idGerado = responseJson.optInt("insertId", 0);
+                    long idGerado = responseJson.optLong("saleId", -1);
+                    if(idGerado == -1) idGerado = responseJson.optLong("id", -1);
+                    if(idGerado == -1) idGerado = responseJson.optLong("insertId", 0);
 
-                    int finalIdGerado = idGerado;
+                    long finalIdGerado = idGerado;
                     new Handler(Looper.getMainLooper()).post(() -> callback.onSuccess(finalIdGerado));
                 } else {
                     String errorBody = lerStream(conn.getErrorStream());
@@ -195,7 +184,7 @@ public class SalesService {
                 int codigo = conn.getResponseCode();
 
                 if (codigo == 200 || codigo == 201) {
-                    new Handler(Looper.getMainLooper()).post(() -> callback.onSuccess(0));
+                    new Handler(Looper.getMainLooper()).post(() -> callback.onSuccess(0L));
                 } else {
                     String errorBody = lerStream(conn.getErrorStream());
                     new Handler(Looper.getMainLooper()).post(() -> callback.onError("Erro Backend: " + codigo + " " + errorBody));

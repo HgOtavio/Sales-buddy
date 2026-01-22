@@ -13,6 +13,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.br.salesbuddy.R;
 import com.br.salesbuddy.contract.HomeContract;
+import com.br.salesbuddy.network.AuthService;
 import com.br.salesbuddy.presenter.HomePresenter;
 
 public class HomeActivity extends AppCompatActivity implements HomeContract.View {
@@ -20,6 +21,7 @@ public class HomeActivity extends AppCompatActivity implements HomeContract.View
     private Button btnRegisterSales, btnReprocess;
     private ImageView ivTopIcon;
     private HomePresenter presenter;
+    private AuthService authService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,19 +29,27 @@ public class HomeActivity extends AppCompatActivity implements HomeContract.View
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_home);
 
+        authService = new AuthService();
+
         setupWindowInsets();
         initViews();
 
-
         presenter = new HomePresenter(this);
 
-        // Pega o ID e passa para o Presenter
         if (getIntent().getExtras() != null) {
             int userId = getIntent().getIntExtra("ID_DO_LOJISTA", -1);
             presenter.setUserId(userId);
         }
 
         setupListeners();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (authService != null) {
+            authService.validateSession(this);
+        }
     }
 
     private void initViews() {
@@ -62,8 +72,6 @@ public class HomeActivity extends AppCompatActivity implements HomeContract.View
         });
     }
 
-
-
     @Override
     public void navigateToRegisterSales(int userId) {
         Intent intent = new Intent(HomeActivity.this, RegisterSalesActivity.class);
@@ -73,7 +81,6 @@ public class HomeActivity extends AppCompatActivity implements HomeContract.View
 
     @Override
     public void navigateToReprocessing(int userId) {
-
         Intent intent = new Intent(HomeActivity.this, ReprocessingActivity.class);
         intent.putExtra("ID_DO_LOJISTA", userId);
         startActivity(intent);

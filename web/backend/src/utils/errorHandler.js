@@ -1,13 +1,22 @@
-const handleError = (res, error) => {
-    if (error.status) {
-        return res.status(error.status).json({ 
-            error: "Erro na Operação",
-            message: error.message 
-        });
-    }
+// src/utils/errorHandler.js
 
-    console.error("Internal Error:", error);
-    return res.status(500).json({ error: "Erro interno no servidor." });
+exports.handleError = (res, error) => {
+   
+    console.error(" Erro capturado:", error);
+
+    
+    const status = error.status || 500;
+   
+    const message = error.message || "Erro interno do servidor.";
+    
+   
+    const extra = {};
+    if (error.missing) extra.missing = error.missing;
+    if (error.errors) extra.details = error.errors; 
+
+    return res.status(status).json({
+        error: "Ocorreu um erro",
+        message: message,
+        ...extra
+    });
 };
-
-module.exports = { handleError };

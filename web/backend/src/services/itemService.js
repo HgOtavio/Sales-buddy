@@ -1,13 +1,11 @@
 const { Sale, SaleItem } = require('../models');
 
 exports.getItemsBySaleId = async (saleId) => {
-    // Verifica se a venda existe antes de buscar os itens
     const saleExists = await Sale.findByPk(saleId);
     if (!saleExists) {
         throw { status: 404, message: "Venda não encontrada." };
     }
 
-    // Busca os itens vinculados a essa venda
     return await SaleItem.findAll({ 
         where: { saleId },
         attributes: ['id', 'productName', 'quantity', 'unitPrice', 'totalItemPrice']

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from 'react-toastify'; 
 import api from "../services/api";
 import { ENDPOINTS } from "../services/endpoints"; 
+
 export function useUsers() {
   const [users, setUsers] = useState([]); 
   const [selectedIds, setSelectedIds] = useState([]); 
@@ -10,12 +11,12 @@ export function useUsers() {
 
   const refreshUsers = useCallback(async () => {
     try {
+      // GET continua igual (sem body)
       const response = await api.get(ENDPOINTS.AUTH.USERS);
-
       setUsers(response.data);
     } catch (error) {
       console.error("Erro ao carregar usuários:", error);
-     toast.error("Erro ao carregar lista de usuários");
+      toast.error("Erro ao carregar lista de usuários");
     } finally {
       setLoading(false);
     }
@@ -58,8 +59,14 @@ export function useUsers() {
         return;
       }
 
+      // --- MUDANÇA PRINCIPAL AQUI ---
+      // Como o Backend espera { "id": 5 } no Body,
+      // e o Axios exige que o body do DELETE esteja dentro de uma chave "data".
+      
       await Promise.all(selectedIds.map(id => 
-          api.delete(`${ENDPOINTS.AUTH.USERS}/${id}`)
+          api.delete(ENDPOINTS.AUTH.USERS, {
+              data: { id: id } // <--- O "pulo do gato" do Axios para delete com body
+          })
       ));
 
       toast.success("Usuário(s) excluído(s) com sucesso!");

@@ -6,6 +6,7 @@ import android.os.Bundle;
 import com.br.salesbuddy.contract.ConfirmDataContract;
 import com.br.salesbuddy.model.SaleData;
 import com.br.salesbuddy.network.SalesService;
+import com.br.salesbuddy.utils.SalePersistence; // Importe a classe nova
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,7 +18,7 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
 
     private final ConfirmDataContract.View view;
     private final SalesService service;
-    private final SaleData currentSale;
+    private SaleData currentSale; // Removi o 'final' para poder substituir
     private final Context context;
 
     public ConfirmDataPresenter(ConfirmDataContract.View view, Context context) {
@@ -29,48 +30,64 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
 
     @Override
     public void loadInitialData(Bundle extras) {
-        if (extras == null) {
-            view.showError("Dados da venda não encontrados.");
-            return;
+        // --- MUDANÇA 1: Lógica de Recuperação (Recovery) ---
+        // Se extras for null ou incompleto, tentamos recuperar do Storage
+        boolean isRecovery = false;
+
+        if (extras == null || !extras.containsKey("VALOR_VENDA")) {
+            SaleData savedSale = SalePersistence.getSavedSale(context);
+            if (savedSale != null) {
+                this.currentSale = savedSale; // Restaura os dados salvos
+                isRecovery = true;
+            } else {
+                view.showError("Dados da venda não encontrados.");
+                return;
+            }
         }
 
-        // 1. Extrair dados
-        currentSale.userId = extras.getInt("ID_DO_LOJISTA", -1);
-        currentSale.nome = extras.getString("NOME");
-        currentSale.cpf = extras.getString("CPF");
-        currentSale.email = extras.getString("EMAIL");
+        // Se NÃO for recuperação, carregamos do Bundle normalmente
+        if (!isRecovery) {
+            currentSale.userId = extras.getInt("ID_DO_LOJISTA", -1);
+            currentSale.nome = extras.getString("NOME");
+            currentSale.cpf = extras.getString("CPF");
+            currentSale.email = extras.getString("EMAIL");
 
-        // Pega a string bruta de itens e SALVA no objeto currentSale
-        String rawItems = extras.getString("ITENS_CONCATENADOS");
-        if (rawItems == null) rawItems = extras.getString("ITEM");
-        currentSale.item = rawItems;
+            String rawItems = extras.getString("ITENS_CONCATENADOS");
+            if (rawItems == null) rawItems = extras.getString("ITEM");
+            currentSale.item = rawItems;
 
-        // 2. Converter valores
-        try {
-            Object valVendaObj = extras.get("VALOR_VENDA");
-            if (valVendaObj instanceof Double) {
-                currentSale.valorVenda = (Double) valVendaObj;
-            } else {
-                String strVenda = extras.getString("VALOR_VENDA", "0")
-                        .replace("R$", "").replace(".", "").replace(",", ".").trim();
-                currentSale.valorVenda = Double.parseDouble(strVenda);
+            try {
+                // ... (Lógica de conversão de Double mantida igual ao anterior) ...
+                Object valVendaObj = extras.get("VALOR_VENDA");
+                if (valVendaObj instanceof Double) {
+                    currentSale.valorVenda = (Double) valVendaObj;
+                } else {
+                    String strVenda = extras.getString("VALOR_VENDA", "0")
+                            .replace("R$", "").replace(".", "").replace(",", ".").trim();
+                    currentSale.valorVenda = Double.parseDouble(strVenda);
+                }
+
+                Object valRecebObj = extras.get("VALOR_RECEBIDO");
+                if (valRecebObj instanceof Double) {
+                    currentSale.valorRecebido = (Double) valRecebObj;
+                } else {
+                    String strReceb = extras.getString("VALOR_RECEBIDO", "0")
+                            .replace("R$", "").replace(".", "").replace(",", ".").trim();
+                    currentSale.valorRecebido = Double.parseDouble(strReceb);
+                }
+
+            } catch (Exception e) {
+                currentSale.valorVenda = 0.0;
+                currentSale.valorRecebido = 0.0;
             }
-
-            Object valRecebObj = extras.get("VALOR_RECEBIDO");
-            if (valRecebObj instanceof Double) {
-                currentSale.valorRecebido = (Double) valRecebObj;
-            } else {
-                String strReceb = extras.getString("VALOR_RECEBIDO", "0")
-                        .replace("R$", "").replace(".", "").replace(",", ".").trim();
-                currentSale.valorRecebido = Double.parseDouble(strReceb);
-            }
-
-        } catch (Exception e) {
-            currentSale.valorVenda = 0.0;
-            currentSale.valorRecebido = 0.0;
         }
 
-        // 3. Cálculos e Formatação
+        // --- EXIBIÇÃO ---
+        updateView();
+    }
+
+    // Extraí para um método auxiliar para reusar
+    private void updateView() {
         double troco = currentSale.valorRecebido - currentSale.valorVenda;
         if (troco < 0) troco = 0.0;
 
@@ -93,17 +110,14 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
             resultado.add("Venda Avulsa / Sem itens");
             return resultado;
         }
-
         Map<String, Integer> contagem = new HashMap<>();
         String[] itensArray = rawItems.split(",");
-
         for (String item : itensArray) {
             String nome = item.trim();
             if (!nome.isEmpty()) {
                 contagem.put(nome, contagem.getOrDefault(nome, 0) + 1);
             }
         }
-
         for (Map.Entry<String, Integer> entry : contagem.entrySet()) {
             resultado.add(entry.getValue() + "x " + entry.getKey());
         }
@@ -113,24 +127,27 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
     @Override
     public void confirmSale() {
         view.showLoading();
+
         service.sendSale(context, currentSale, new SalesService.SalesCallback() {
             @Override
-            public void onSuccess(int idVenda) {
+            public void onSuccess(long idVenda) {
                 view.hideLoading();
+
+                // --- MUDANÇA 2: Sucesso! Limpa o backup ---
+                SalePersistence.clear(context);
+
                 view.showMessage("Venda Finalizada!");
 
                 Bundle finalBundle = new Bundle();
-                finalBundle.putInt("ID_VENDA_REAL", idVenda);
+                finalBundle.putLong("ID_VENDA_REAL", idVenda);
                 finalBundle.putInt("ID_DO_LOJISTA", currentSale.userId);
                 finalBundle.putString("NOME", currentSale.nome);
                 finalBundle.putString("CPF", currentSale.cpf);
                 finalBundle.putString("EMAIL", currentSale.email);
-
                 finalBundle.putDouble("VALOR_VENDA", currentSale.valorVenda);
                 finalBundle.putDouble("VALOR_RECEBIDO", currentSale.valorRecebido);
                 double troco = currentSale.valorRecebido - currentSale.valorVenda;
                 finalBundle.putDouble("TROCO", troco < 0 ? 0.0 : troco);
-
                 finalBundle.putString("ITENS_CONCATENADOS", currentSale.item);
 
                 view.navigateToFinalization(finalBundle);
@@ -140,7 +157,15 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
             public void onError(String message) {
                 view.hideLoading();
 
-                if (isNetworkError(message)) {
+                // --- MUDANÇA 3: Falha! Salva o backup ---
+                if (shouldSaveLocally(message)) {
+                    // Salva no LocalStorage
+                    SalePersistence.saveSale(context, currentSale);
+
+                    // Avisa que salvou (opcional)
+                    // view.showMessage("Conexão perdida. Dados salvos localmente.");
+
+                    // Vai para a tela de erro
                     view.navigateToConnectionError();
                 } else {
                     view.showError(message);
@@ -149,13 +174,18 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
         });
     }
 
-    private boolean isNetworkError(String msg) {
+    private boolean shouldSaveLocally(String msg) {
         if (msg == null) return false;
         String m = msg.toLowerCase();
+
+        // Verifica erro de rede OU erro 500 (Backend caiu)
         return m.contains("unable to resolve host") ||
                 m.contains("timeout") ||
                 m.contains("connect") ||
                 m.contains("network") ||
-                m.contains("socket");
+                m.contains("socket") ||
+                m.contains("500") || // Internal Server Error
+                m.contains("502") || // Bad Gateway
+                m.contains("503");   // Service Unavailable
     }
 }

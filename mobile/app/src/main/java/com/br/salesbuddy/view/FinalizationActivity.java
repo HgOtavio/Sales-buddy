@@ -19,9 +19,11 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.br.salesbuddy.R;
 import com.br.salesbuddy.contract.FinalizationContract;
+import com.br.salesbuddy.network.AuthService;
 import com.br.salesbuddy.presenter.FinalizationPresenter;
 import com.br.salesbuddy.view.adapter.ReceiptItemsAdapter;
 
@@ -33,8 +35,10 @@ public class FinalizationActivity extends AppCompatActivity implements Finalizat
     private RecyclerView rvReceiptItems;
     private Button btnSim, btnNao;
     private ImageView btnMenu, btnBack;
+    private SwipeRefreshLayout swipeRefresh;
 
     private FinalizationPresenter presenter;
+    private AuthService authService;
     private int currentUserId;
 
     @Override
@@ -42,6 +46,8 @@ public class FinalizationActivity extends AppCompatActivity implements Finalizat
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_finalization);
+
+        authService = new AuthService();
 
         setupWindowInsets();
         initViews();
@@ -54,6 +60,14 @@ public class FinalizationActivity extends AppCompatActivity implements Finalizat
         }
 
         setupListeners();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (authService != null) {
+            authService.validateSession(this);
+        }
     }
 
     private void initViews() {
@@ -74,6 +88,9 @@ public class FinalizationActivity extends AppCompatActivity implements Finalizat
 
         btnMenu = findViewById(R.id.btn_menu);
         btnBack = findViewById(R.id.btn_back);
+
+        swipeRefresh = findViewById(R.id.swipeRefresh);
+        swipeRefresh.setColorSchemeResources(R.color.black);
     }
 
     private void setupListeners() {
@@ -82,6 +99,13 @@ public class FinalizationActivity extends AppCompatActivity implements Finalizat
         btnMenu.setOnClickListener(v -> {
             MenuBottomSheetActivity menu = MenuBottomSheetActivity.newInstance(currentUserId, false);
             menu.show(getSupportFragmentManager(), "MenuBottomSheet");
+        });
+
+        swipeRefresh.setOnRefreshListener(() -> {
+            swipeRefresh.setRefreshing(false);
+            if (authService != null) {
+                authService.validateSession(this);
+            }
         });
 
         btnSim.setOnClickListener(v -> presenter.onSendEmailClicked());

@@ -10,5 +10,6 @@ router.post('/email', authMiddleware.verifyToken, saleController.sendReceipt);
 router.get('/', authMiddleware.verifyToken, saleController.getDashboard);
 
 router.post('/details', authMiddleware.verifyToken, saleController.getSaleDetails);
+router.post('/download-pdf', authMiddleware.verifyToken, saleController.downloadReceipt);
 
 module.exports = router;

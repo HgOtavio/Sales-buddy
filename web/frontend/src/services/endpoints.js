@@ -1,11 +1,17 @@
 export const ENDPOINTS = {
   AUTH: {
     LOGIN: "/auth/login",
-    RESET_PASSWORD: "/auth/reset-password", // Definir nova senha
+    RESET_PASSWORD: "/auth/reset-password", 
     VERIFY: "/auth/verify",
-    REGISTER: "/auth/register",             // Criar conta
-    FORGOT_PASSWORD: "/auth/forgot-password", // Pedir link de reset
-    USERS: "/auth/users"                    // Base para update (/auth/users/:id)
+    REGISTER: "/auth/register",            
+    FORGOT_PASSWORD: "/auth/forgot-password", 
+    USERS: "/auth/users"                    
   },
-  // VENDAS: { ... }
+  SALES: {
+    BASE: "/vendas",              
+    LIST: "/vendas/list",         
+    DETAILS: "/vendas/details",  
+    EMAIL: "/vendas/email",    
+    DOWNLOAD_PDF: "/vendas/download-pdf" 
+  }
 };

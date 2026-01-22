@@ -18,7 +18,9 @@ public class FinalizationPresenter implements FinalizationContract.Presenter {
     private final Context context;
     private final SalesService service;
 
-    private int saleId;
+    // --- MUDANÇA 1: ID agora é Long ---
+    private long saleId;
+
     private int userId;
     private String clientName;
     private String clientCpf;
@@ -43,8 +45,10 @@ public class FinalizationPresenter implements FinalizationContract.Presenter {
             return;
         }
 
-        // Recupera o ID gerado na tela anterior
-        this.saleId = extras.getInt("ID_VENDA_REAL", 0);
+        // --- MUDANÇA 2: Recuperar Long do Bundle ---
+        // Deve corresponder ao .putLong() feito no ConfirmDataPresenter
+        this.saleId = extras.getLong("ID_VENDA_REAL", 0L);
+
         this.userId = extras.getInt("ID_DO_LOJISTA", -1);
         this.clientName = extras.getString("NOME", "Não Informado");
         this.clientCpf = extras.getString("CPF", "-");
@@ -57,7 +61,9 @@ public class FinalizationPresenter implements FinalizationContract.Presenter {
         String totalFmt = String.format(Locale.getDefault(), "R$ %.2f", valVenda);
         String pagoFmt = String.format(Locale.getDefault(), "R$ %.2f", valRecebido);
         String trocoFmt = String.format(Locale.getDefault(), "R$ %.2f", troco);
-        String idFmt = (saleId != 0) ? "Venda n° " + saleId : "Venda processada";
+
+        // Verifica se é diferente de 0L (Long)
+        String idFmt = (saleId != 0L) ? "Venda n° " + saleId : "Venda processada";
 
         this.rawItemsString = extras.getString("ITENS_CONCATENADOS");
         if (rawItemsString == null) rawItemsString = extras.getString("ITEM");
@@ -91,8 +97,8 @@ public class FinalizationPresenter implements FinalizationContract.Presenter {
             return;
         }
 
-        // Validação extra do ID
-        if (saleId == 0) {
+        // Validação extra do ID (Long)
+        if (saleId == 0L) {
             view.showError("Erro: ID da venda inválido (0).");
             return;
         }
@@ -100,8 +106,7 @@ public class FinalizationPresenter implements FinalizationContract.Presenter {
         view.showLoading("Solicitando envio de e-mail...");
 
         Map<String, Object> saleData = new HashMap<>();
-        // AQUI: Passamos o ID com o nome "id". O Service vai duplicar como "saleId" depois.
-        saleData.put("id", saleId);
+        saleData.put("id", saleId); // Passa o Long aqui, tudo certo
         saleData.put("clientName", clientName);
         saleData.put("clientCpf", clientCpf);
         saleData.put("email", clientEmail);
@@ -127,10 +132,9 @@ public class FinalizationPresenter implements FinalizationContract.Presenter {
         }
         saleData.put("items", itemsList);
 
-        // PASSE O CONTEXT AQUI
         service.requestReceiptEmail(context, saleData, new SalesService.SalesCallback() {
             @Override
-            public void onSuccess(int id) {
+            public void onSuccess(long id) { // --- MUDANÇA 3: Callback recebe long ---
                 view.hideLoading();
                 view.showEmailSuccessDialog(clientEmail);
             }

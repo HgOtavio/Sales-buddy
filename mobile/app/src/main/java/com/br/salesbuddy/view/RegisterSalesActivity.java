@@ -16,9 +16,11 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.br.salesbuddy.R;
 import com.br.salesbuddy.contract.RegisterSalesContract;
+import com.br.salesbuddy.network.AuthService;
 import com.br.salesbuddy.presenter.RegisterSalesPresenter;
 import com.br.salesbuddy.utils.MaskUtils;
 import com.br.salesbuddy.view.adapter.ProductAdapter;
@@ -30,18 +32,22 @@ public class RegisterSalesActivity extends AppCompatActivity implements Register
     private TextInputLayout layoutEmail;
     private Button btnFinalizar;
     private ImageView btnMenu, btnBack;
+    private SwipeRefreshLayout swipeRefresh;
 
     private RecyclerView rvItems;
     private ProductAdapter productAdapter;
 
     private int usuarioId;
     private RegisterSalesPresenter presenter;
+    private AuthService authService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_registersales);
+
+        authService = new AuthService();
 
         setupWindowInsets();
 
@@ -52,63 +58,15 @@ public class RegisterSalesActivity extends AppCompatActivity implements Register
         initViews();
         setupRecyclerView();
         setupMasks();
+        setupListeners();
+    }
 
-        btnBack.setOnClickListener(v -> finish());
-
-        btnMenu.setOnClickListener(v -> {
-            MenuBottomSheetActivity menu = MenuBottomSheetActivity.newInstance(usuarioId, true);
-            menu.show(getSupportFragmentManager(), "MenuTopSheet");
-        });
-
-        // --- AQUI ESTÁ A LÓGICA DE VALIDAÇÃO ---
-        btnFinalizar.setOnClickListener(v -> {
-            // 1. Pegar os textos removendo espaços em branco nas pontas
-            String nome = etNome.getText().toString().trim();
-            String cpf = etCpf.getText().toString().trim();
-            String email = etEmail.getText().toString().trim();
-            String valVenda = etValorVenda.getText().toString().trim();
-            String valRecebido = etValorRecebido.getText().toString().trim();
-
-            // 2. Validação: Nome Obrigatório
-            if (nome.isEmpty()) {
-                etNome.setError("O nome do cliente é obrigatório");
-                etNome.requestFocus();
-                return; // Para a execução aqui
-            }
-
-            // 3. Validação: Valor da Venda (não pode ser vazio ou R$ 0,00)
-            if (valVenda.isEmpty() || valVenda.equals("R$ 0,00")) {
-                etValorVenda.setError("Informe o valor da venda");
-                etValorVenda.requestFocus();
-                return;
-            }
-
-            // 4. Validação: Valor Recebido
-            if (valRecebido.isEmpty() || valRecebido.equals("R$ 0,00")) {
-                etValorRecebido.setError("Informe o valor recebido");
-                etValorRecebido.requestFocus();
-                return;
-            }
-
-            // 5. Validação: Email (Apenas se preenchido, verifica formato)
-            if (!email.isEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                layoutEmail.setError("Digite um e-mail válido");
-                etEmail.requestFocus();
-                return;
-            } else {
-                layoutEmail.setError(null);
-            }
-
-            // 6. Validação: Lista de Produtos
-            String itensConcatenados = productAdapter.getItemsConcatenated();
-            if (itensConcatenados.isEmpty()) {
-                Toast.makeText(this, "Adicione pelo menos um item à venda!", Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            // Se passou por tudo, envia para o Presenter
-            presenter.validateAndAdvance(usuarioId, nome, cpf, email, valVenda, valRecebido, itensConcatenados);
-        });
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (authService != null) {
+            authService.validateSession(this);
+        }
     }
 
     private void initViews() {
@@ -124,6 +82,70 @@ public class RegisterSalesActivity extends AppCompatActivity implements Register
         btnFinalizar = findViewById(R.id.btnFinalizar);
         btnMenu = findViewById(R.id.btn_menu);
         btnBack = findViewById(R.id.btn_back);
+        swipeRefresh = findViewById(R.id.swipeRefresh);
+        swipeRefresh.setColorSchemeResources(R.color.black);
+
+
+        etNome.requestFocus();
+    }
+
+    private void setupListeners() {
+        btnBack.setOnClickListener(v -> finish());
+
+        btnMenu.setOnClickListener(v -> {
+            MenuBottomSheetActivity menu = MenuBottomSheetActivity.newInstance(usuarioId, true);
+            menu.show(getSupportFragmentManager(), "MenuTopSheet");
+        });
+
+        swipeRefresh.setOnRefreshListener(() -> {
+            swipeRefresh.setRefreshing(false);
+            layoutEmail.setError(null);
+            if (authService != null) {
+                authService.validateSession(this);
+            }
+        });
+
+        btnFinalizar.setOnClickListener(v -> {
+            String nome = etNome.getText().toString().trim();
+            String cpf = etCpf.getText().toString().trim();
+            String email = etEmail.getText().toString().trim();
+            String valVenda = etValorVenda.getText().toString().trim();
+            String valRecebido = etValorRecebido.getText().toString().trim();
+
+            if (nome.isEmpty()) {
+                etNome.setError("O nome do cliente é obrigatório");
+                etNome.requestFocus();
+                return;
+            }
+
+            if (valVenda.isEmpty() || valVenda.equals("R$ 0,00")) {
+                etValorVenda.setError("Informe o valor da venda");
+                etValorVenda.requestFocus();
+                return;
+            }
+
+            if (valRecebido.isEmpty() || valRecebido.equals("R$ 0,00")) {
+                etValorRecebido.setError("Informe o valor recebido");
+                etValorRecebido.requestFocus();
+                return;
+            }
+
+            if (!email.isEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                layoutEmail.setError("Digite um e-mail válido");
+                etEmail.requestFocus();
+                return;
+            } else {
+                layoutEmail.setError(null);
+            }
+
+            String itensConcatenados = productAdapter.getItemsConcatenated();
+            if (itensConcatenados.isEmpty()) {
+                Toast.makeText(this, "Adicione pelo menos um item à venda!", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            presenter.validateAndAdvance(usuarioId, nome, cpf, email, valVenda, valRecebido, itensConcatenados);
+        });
     }
 
     private void setupRecyclerView() {

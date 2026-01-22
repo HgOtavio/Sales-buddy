@@ -5,47 +5,55 @@ exports.createNewSale = async (data) => {
     const transaction = await sequelize.transaction();
 
     try {
-        const { 
-            userId, clientName, clientCpf, clientEmail, 
-            saleValue, receivedValue, items 
-        } = data;
+        // 1. Sanitização dos dados de entrada (Evita NULL e UNDEFINED)
+        // Se não vier nome, define como "Consumidor Final". Se não vier CPF/Email, define como string vazia.
+        const userId = data.userId; // Esse é obrigatório, deve vir validado do controller
+        const clientName = data.clientName || "Consumidor Final"; 
+        const clientCpf = data.clientCpf || ""; 
+        const clientEmail = data.clientEmail || "";
+        
+        // Garante que são números, prevenindo NaN
+        const vSale = parseFloat(data.saleValue) || 0;
+        const vReceived = parseFloat(data.receivedValue) || 0;
+        const items = data.items || [];
 
-        // Garante que são números para o cálculo
-        const vSale = parseFloat(saleValue);
-        const vReceived = parseFloat(receivedValue);
-
-        // Validação de Negócio: Pagamento insuficiente
+        // 2. Validações de Regra de Negócio
         if (vReceived < vSale) {
             throw { 
-                status: 402, // Payment Required
+                status: 402, 
                 message: "Valor recebido insuficiente.", 
                 missing: (vSale - vReceived).toFixed(2) 
             };
         }
 
+        if (!items || items.length === 0) {
+            throw { status: 400, message: "A venda deve conter pelo menos um item." };
+        }
+
         const calculatedChange = vReceived - vSale;
 
-        // 1. Cria a Venda
         const newSale = await Sale.create({
             userId,
-            clientName,
-            clientCpf,
+            clientName,  
+            clientCpf,  
             clientEmail,
             saleValue: vSale,
             receivedValue: vReceived,
             change: calculatedChange
         }, { transaction });
 
-        // 2. Cria os Itens da Venda
         if (items && Array.isArray(items) && items.length > 0) {
             const itemList = items.map(item => {
-                const qtd = item.quantity || 1;
-                const price = item.price || 0; // O JSON usa 'price', o banco usa 'unitPrice'
+                const qtd = parseFloat(item.quantity) || 1;
+                const price = parseFloat(item.price || item.unitPrice) || 0; 
+                
+                let prodName = item.productName || item.name;
+                if (!prodName && typeof item === 'string') prodName = item;
+                if (!prodName) prodName = "Produto Genérico"; 
 
                 return {
                     saleId: newSale.id,
-                    // Aceita 'productName' (do JSON novo) ou 'name' (legado) ou o próprio item se for string
-                    productName: item.productName || item.name || (typeof item === 'string' ? item : "Produto sem nome"),
+                    productName: prodName,
                     quantity: qtd,
                     unitPrice: price,
                     totalItemPrice: price * qtd
@@ -65,7 +73,7 @@ exports.createNewSale = async (data) => {
         };
 
     } catch (error) {
-        await transaction.rollback();
+        if (transaction) await transaction.rollback();
         throw error;
     }
 };

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
+import { ENDPOINTS } from "../services/endpoints"; // <--- Importando seus Endpoints
 import receiptIcon from "../assets/icon-sales.svg";
 
 const formatCurrency = (value) => {
@@ -21,9 +22,11 @@ export function SalesTable({ onViewReceipt }) {
   useEffect(() => {
     async function fetchSales() {
       try {
-        const response = await api.get('/vendas'); 
-        console.log("DADOS VINDOS DO BACKEND:", response.data); 
+  
+        const response = await api.get(ENDPOINTS.SALES.BASE); 
+        
         setVendas(response.data);
+        console.log("Vendas carregadas:", response.data);
       } catch (error) {
         console.error("Erro ao buscar vendas", error);
       } finally {
@@ -69,7 +72,6 @@ export function SalesTable({ onViewReceipt }) {
               <td className="td-data" style={{ fontWeight: 'bold', textAlign: 'center' }} >{venda.id}</td>
               <td className="td-data" style={{ fontWeight: 'bold',  textAlign: 'center'}}>{venda.clientName || venda.nome || "Cliente Balcão"}</td>
               <td className="td-data" style={{ textAlign: 'center' }}>{formatCPF(venda.clientCpf || venda.cpf)}</td>
-
               
               <td className="td-data" style={{ fontSize: '13px', textAlign: 'center' }}>
                   {venda.clientEmail || venda.email || "-"}

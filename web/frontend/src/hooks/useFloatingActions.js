@@ -1,6 +1,6 @@
 import { toast } from 'react-toastify';
 import api from "../services/api";
-import { ENDPOINTS } from "../services/endpoints"; // <--- Importando as rotas
+import { ENDPOINTS } from "../services/endpoints"; 
 
 export function useFloatingActions(setActive, refreshUsers, editingUser, activeTab) {
   
@@ -12,18 +12,15 @@ export function useFloatingActions(setActive, refreshUsers, editingUser, activeT
   async function handleFormSubmit(formData) {
     try {
       
-
       if (editingUser) {
-        const payload = { ...formData };
+        const payload = {
+            id: formData.id,  
+            name: formData.name,
+            email: formData.email,
+            user: formData.user || formData.username,
+        };
 
-        delete payload.company; 
-        delete payload.taxId;
-        delete payload.id;        
-        delete payload.createdAt; 
-        delete payload.updatedAt;
-        delete payload.password;  
-
-        await api.put(`${ENDPOINTS.AUTH.USERS}/${formData.id}`, payload);
+        await api.put(ENDPOINTS.AUTH.USERS, payload);
         toast.success("Usuário atualizado com sucesso!");
 
       } else {
@@ -52,30 +49,28 @@ export function useFloatingActions(setActive, refreshUsers, editingUser, activeT
     }
   }
 
+ 
   async function handleResetPassword() {
     if (!editingUser?.email) {
       toast.error("E-mail do usuário não identificado.");
       return;
     }
 
-    const confirm = window.confirm(`Deseja enviar um token para ${editingUser.email}?`);
-    
-    if (confirm) {
-      try {
-        console.log("Enviando solicitação de reset...");
-        
-        const response = await api.post(ENDPOINTS.AUTH.FORGOT_PASSWORD, { 
-            email: editingUser.email 
-        });
-        
-        console.log("Resposta do servidor:", response.data);
-        toast.success("Token enviado!");
-      } catch (error) {
-        console.error("Erro completo capturado no Front:", error.response || error);
-        
-        const msg = error.response?.data?.message || error.response?.data?.error || "Erro ao solicitar reset";
-        toast.error(msg);
-      }
+    try {
+     
+      console.log("Enviando solicitação de reset...");
+      
+      await api.post(ENDPOINTS.AUTH.FORGOT_PASSWORD, { 
+          email: editingUser.email 
+      });
+      
+     
+      toast.success("E-mail de recuperação enviado com sucesso!");
+
+    } catch (error) {
+      console.error("Erro ao resetar senha:", error.response || error);
+      const msg = error.response?.data?.message || "Erro ao solicitar reset.";
+      toast.error(msg);
     }
   }
   

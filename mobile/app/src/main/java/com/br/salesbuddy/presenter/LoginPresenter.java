@@ -4,15 +4,13 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.br.salesbuddy.contract.LoginContract;
-import com.br.salesbuddy.model.User;
-import com.br.salesbuddy.contract.LoginContract;
 import com.br.salesbuddy.network.AuthService;
 
 public class LoginPresenter implements LoginContract.Presenter {
 
-    private LoginContract.View view;
-    private AuthService authService;
-    private Context context; // Necessário para salvar o token
+    private final LoginContract.View view;
+    private final AuthService authService;
+    private final Context context;
 
     public LoginPresenter(LoginContract.View view, Context context) {
         this.view = view;
@@ -21,32 +19,48 @@ public class LoginPresenter implements LoginContract.Presenter {
     }
 
     @Override
-    public void performLogin(String user, String password) {
-        // 1. Validação simples
-        if (user.isEmpty() || password.isEmpty()) {
+    public void performLogin(String email, String password) {
+
+        if (email.isEmpty() || password.isEmpty()) {
             view.showLoginError("Preencha todos os campos!");
             return;
         }
 
         view.showLoading();
 
-        // 2. Chama o "Server" (Service)
-        authService.login(user, password, new AuthService.LoginCallback() {
+
+        authService.login(context, email, password, createLoginCallback());
+    }
+
+
+    private AuthService.LoginCallback createLoginCallback() {
+        return new AuthService.LoginCallback() {
             @Override
-            public void onSuccess(User userModel) {
-                // Salva o Token para usar depois
-                SharedPreferences prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
-                prefs.edit().putString("salesToken", userModel.getToken()).apply();
+            public void onSuccess(int userId, String userName, String token) {
+
+                if (view == null) return;
 
                 view.hideLoading();
-                view.onLoginSuccess(userModel.getId(), userModel.getName());
+
+
+                saveTokenLocally(token);
+
+
+                view.onLoginSuccess(userId, userName);
             }
 
             @Override
             public void onError(String errorMessage) {
+                if (view == null) return;
+
                 view.hideLoading();
                 view.showLoginError(errorMessage);
             }
-        });
+        };
+    }
+
+    private void saveTokenLocally(String token) {
+        SharedPreferences prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
+        prefs.edit().putString("salesToken", token).apply();
     }
 }

@@ -64,255 +64,261 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <androidx.core.widget.NestedScrollView
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:fillViewport="true"
         app:layout_constraintTop_toBottomOf="@id/header_container"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <LinearLayout
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingBottom="20dp">
+            android:layout_height="match_parent"
+            android:fillViewport="true">
 
             <LinearLayout
-                android:id="@+id/title_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="0dp"
-                android:layout_marginTop="8dp">
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="2dp"
-                    android:layout_weight="1"
-                    android:background="#A32C65" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
-                    android:text="REGISTRAR VENDA"
-                    android:textColor="#074A82"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="2dp"
-                    android:layout_weight="1"
-                    android:background="#A32C65" />
-            </LinearLayout>
-
-            <androidx.cardview.widget.CardView
-                android:id="@+id/card_form"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="20dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="4dp"
-                app:cardBackgroundColor="#FFFFFF">
+                android:orientation="vertical"
+                android:paddingBottom="20dp">
 
                 <LinearLayout
+                    android:id="@+id/title_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="18dp"
-                    android:layout_marginBottom="60dp">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="0dp"
+                    android:layout_marginTop="8dp">
 
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/layoutNome"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
-                        android:layout_width="match_parent"
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="2dp"
+                        android:layout_weight="1"
+                        android:background="#A32C65" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        app:boxStrokeColor="#074A82"
-                        app:boxBackgroundColor="#FFFFFF"
-                        app:boxCornerRadiusTopStart="4dp"
-                        app:boxCornerRadiusTopEnd="4dp"
-                        app:hintEnabled="false"
-                        app:boxCornerRadiusBottomStart="4dp"
-                        app:boxCornerRadiusBottomEnd="4dp">
+                        android:layout_marginHorizontal="5dp"
+                        android:text="REGISTRAR VENDA"
+                        android:textColor="#074A82"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etNomeCliente"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/bg_lista_border"
-                            android:textColor="#A32C65"
-                            android:hint="NOME CLIENTE"
-                            android:textSize="18sp"
-                            android:textColorHint="#C0CDD8" />
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/layoutCpf"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        app:boxStrokeColor="#074A82"
-                        app:hintTextColor="#074A82"
-                        app:boxBackgroundColor="#FFFFFF"
-                        app:boxCornerRadiusTopStart="4dp"
-                        app:boxCornerRadiusTopEnd="4dp"
-                        app:boxCornerRadiusBottomStart="4dp"
-                        app:boxCornerRadiusBottomEnd="4dp"
-                        app:hintEnabled="false">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etCpf"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="number"
-                            android:hint="CPF"
-                            android:textColor="#A32C65"
-                            android:textSize="18sp"
-                            android:textColorHint="#C0CDD8"
-                            android:background="@drawable/bg_lista_border"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/layoutEmail"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        app:boxBackgroundColor="#FFFFFF"
-                        app:boxCornerRadiusTopEnd="4dp"
-                        app:boxCornerRadiusTopStart="4dp"
-                        app:boxStrokeColor="#074A82"
-                        app:errorEnabled="true"
-                        app:hintEnabled="false"
-                        app:hintTextColor="#074A82">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etEmailCliente"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/bg_lista_border"
-                            android:hint="E-MAIL"
-                            android:inputType="textEmailAddress"
-                            android:textColor="#A32C65"
-                            android:textColorHint="#C0CDD8"
-                            android:textSize="18sp" />
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="4dp">
-
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/rv_items"
-                            android:layout_width="0dp"
-                            android:layout_height="0dp"
-                            app:layout_constraintHeight_default="wrap"
-                            app:layout_constraintHeight_max="127dp"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            android:nestedScrollingEnabled="true"
-                            android:scrollbars="vertical"
-                            tools:listitem="@layout/item_produto" />
-
-                    </androidx.constraintlayout.widget.ConstraintLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/layoutValorVenda"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        app:boxStrokeColor="#074A82"
-                        app:hintTextColor="#074A82"
-                        app:boxBackgroundColor="#FFFFFF"
-                        app:hintEnabled="false"
-                        app:boxCornerRadiusTopStart="4dp"
-                        app:boxCornerRadiusTopEnd="4dp"
-                        app:boxCornerRadiusBottomStart="4dp"
-                        app:boxCornerRadiusBottomEnd="4dp">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etValorVenda"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="number"
-                            android:hint="VALOR VENDA"
-                            android:textColor="#A32C65"
-                            android:textSize="18sp"
-                            android:textColorHint="#C0CDD8"
-                            android:background="@drawable/bg_lista_border"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/layoutValorRecebido"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        app:boxStrokeColor="#074A82"
-                        app:hintTextColor="#074A82"
-                        app:boxBackgroundColor="#FFFFFF"
-                        app:boxCornerRadiusTopStart="4dp"
-                        app:hintEnabled="false"
-                        app:boxCornerRadiusTopEnd="4dp"
-                        app:boxCornerRadiusBottomStart="4dp"
-                        app:boxCornerRadiusBottomEnd="4dp">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etValorRecebido"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="number"
-                            android:textColor="#A32C65"
-                            android:hint="VALOR RECEBIDO"
-                            android:textSize="18sp"
-                            android:textColorHint="#C0CDD8"
-                            android:background="@drawable/bg_lista_border"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="2dp"
+                        android:layout_weight="1"
+                        android:background="#A32C65" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp">
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card_form"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="20dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="4dp"
+                    app:cardBackgroundColor="#FFFFFF">
 
-                <Button
-                    android:id="@+id/btnFinalizar"
-                    android:layout_width="180dp"
-                    android:layout_height="60dp"
-                    android:text="IR PARA RESUMO"
-                    android:textColor="#FFFFFF"
-                    android:textSize="14dp"
-                    android:textStyle="bold"
-                    app:backgroundTint="#074A82"
-                    app:cornerRadius="6dp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"/>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="18dp"
+                        android:layout_marginBottom="60dp">
 
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_seta_avancar"
-                    android:layout_marginEnd="8dp"
-                    android:elevation="10dp"
-                    app:tint="#FFFFFF"
-                    app:layout_constraintEnd_toEndOf="@id/btnFinalizar"
-                    app:layout_constraintTop_toTopOf="@id/btnFinalizar"
-                    app:layout_constraintBottom_toBottomOf="@id/btnFinalizar"/>
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/layoutNome"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            app:boxStrokeColor="#074A82"
+                            app:boxBackgroundColor="#FFFFFF"
+                            app:boxCornerRadiusTopStart="4dp"
+                            app:boxCornerRadiusTopEnd="4dp"
+                            app:hintEnabled="false"
+                            app:boxCornerRadiusBottomStart="4dp"
+                            app:boxCornerRadiusBottomEnd="4dp">
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etNomeCliente"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_lista_border"
+                                android:textColor="#A32C65"
+                                android:hint="NOME CLIENTE"
+                                android:textSize="18sp"
+                                android:textColorHint="#C0CDD8" />
+                        </com.google.android.material.textfield.TextInputLayout>
 
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/layoutCpf"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            app:boxStrokeColor="#074A82"
+                            app:hintTextColor="#074A82"
+                            app:boxBackgroundColor="#FFFFFF"
+                            app:boxCornerRadiusTopStart="4dp"
+                            app:boxCornerRadiusTopEnd="4dp"
+                            app:boxCornerRadiusBottomStart="4dp"
+                            app:boxCornerRadiusBottomEnd="4dp"
+                            app:hintEnabled="false">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etCpf"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="number"
+                                android:hint="CPF"
+                                android:textColor="#A32C65"
+                                android:textSize="18sp"
+                                android:textColorHint="#C0CDD8"
+                                android:background="@drawable/bg_lista_border"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/layoutEmail"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:boxBackgroundColor="#FFFFFF"
+                            app:boxCornerRadiusTopEnd="4dp"
+                            app:boxCornerRadiusTopStart="4dp"
+                            app:boxStrokeColor="#074A82"
+                            app:errorEnabled="true"
+                            app:hintEnabled="false"
+                            app:hintTextColor="#074A82">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etEmailCliente"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_lista_border"
+                                android:hint="E-MAIL"
+                                android:inputType="textEmailAddress"
+                                android:textColor="#A32C65"
+                                android:textColorHint="#C0CDD8"
+                                android:textSize="18sp" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="4dp">
+
+                            <androidx.recyclerview.widget.RecyclerView
+                                android:id="@+id/rv_items"
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                app:layout_constraintHeight_default="wrap"
+                                app:layout_constraintHeight_max="127dp"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                android:nestedScrollingEnabled="true"
+                                android:scrollbars="vertical"
+                                tools:listitem="@layout/item_produto" />
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/layoutValorVenda"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            app:boxStrokeColor="#074A82"
+                            app:hintTextColor="#074A82"
+                            app:boxBackgroundColor="#FFFFFF"
+                            app:hintEnabled="false"
+                            app:boxCornerRadiusTopStart="4dp"
+                            app:boxCornerRadiusTopEnd="4dp"
+                            app:boxCornerRadiusBottomStart="4dp"
+                            app:boxCornerRadiusBottomEnd="4dp">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etValorVenda"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="number"
+                                android:hint="VALOR VENDA"
+                                android:textColor="#A32C65"
+                                android:textSize="18sp"
+                                android:textColorHint="#C0CDD8"
+                                android:background="@drawable/bg_lista_border"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/layoutValorRecebido"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:boxStrokeColor="#074A82"
+                            app:hintTextColor="#074A82"
+                            app:boxBackgroundColor="#FFFFFF"
+                            app:boxCornerRadiusTopStart="4dp"
+                            app:hintEnabled="false"
+                            app:boxCornerRadiusTopEnd="4dp"
+                            app:boxCornerRadiusBottomStart="4dp"
+                            app:boxCornerRadiusBottomEnd="4dp">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etValorRecebido"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="number"
+                                android:textColor="#A32C65"
+                                android:hint="VALOR RECEBIDO"
+                                android:textSize="18sp"
+                                android:textColorHint="#C0CDD8"
+                                android:background="@drawable/bg_lista_border"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp">
+
+                    <Button
+                        android:id="@+id/btnFinalizar"
+                        android:layout_width="180dp"
+                        android:layout_height="60dp"
+                        android:text="IR PARA RESUMO"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14dp"
+                        android:textStyle="bold"
+                        app:backgroundTint="#074A82"
+                        app:cornerRadius="6dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"/>
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_seta_avancar"
+                        android:layout_marginEnd="8dp"
+                        android:elevation="10dp"
+                        app:tint="#FFFFFF"
+                        app:layout_constraintEnd_toEndOf="@id/btnFinalizar"
+                        app:layout_constraintTop_toTopOf="@id/btnFinalizar"
+                        app:layout_constraintBottom_toBottomOf="@id/btnFinalizar"/>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

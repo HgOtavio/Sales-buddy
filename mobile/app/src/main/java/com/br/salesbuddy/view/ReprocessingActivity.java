@@ -1,5 +1,6 @@
 package com.br.salesbuddy.view;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Color;
@@ -7,7 +8,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
-import android.widget.Button; // Import do Button
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -15,10 +16,12 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.br.salesbuddy.R;
 import com.br.salesbuddy.contract.ReprocessingContract;
 import com.br.salesbuddy.model.ReprocessSaleData;
+import com.br.salesbuddy.network.AuthService;
 import com.br.salesbuddy.presenter.ReprocessingPresenter;
 import com.br.salesbuddy.view.adapter.ReprocessingAdapter;
 
@@ -31,34 +34,39 @@ public class ReprocessingActivity extends AppCompatActivity implements Reprocess
     private RecyclerView recyclerView;
     private ReprocessingAdapter adapter;
     private ProgressBar progressBar;
-    private Button btnReprocessar; // Botão do rodapé
+    private Button btnReprocessar;
+    private SwipeRefreshLayout swipeRefresh;
 
+    private AuthService authService;
+    private int userId;
+
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reprocessing);
 
-        // 1. Bind Views
+        authService = new AuthService();
+
         recyclerView = findViewById(R.id.rv_reprocessing_list);
         ImageView btnBack = findViewById(R.id.btn_back);
         ImageView btnMenu = findViewById(R.id.btn_menu);
-
-        // --- AQUI ESTÁ O BOTÃO DA TELA PAI ---
         btnReprocessar = findViewById(R.id.btnFinalizar);
 
-        // progressBar = findViewById(R.id.progressBar); // Descomente se tiver
+        // Certifique-se de ter adicionado o SwipeRefreshLayout no XML com este ID
+        swipeRefresh = findViewById(R.id.swipeRefresh);
+        if (swipeRefresh != null) {
+            swipeRefresh.setColorSchemeResources(R.color.black);
+        }
 
-        // 2. Configura Adapter (Sem listener de clique, só visualização)
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new ReprocessingAdapter(new ArrayList<>());
         recyclerView.setAdapter(adapter);
 
-        // 3. Inicializa Presenter
         presenter = new ReprocessingPresenter(this);
 
-        int userId = getIntent().getIntExtra("ID_DO_LOJISTA", -1);
+        userId = getIntent().getIntExtra("ID_DO_LOJISTA", -1);
 
-        // 4. Configura Cliques
         btnBack.setOnClickListener(v -> presenter.onBackClicked());
 
         btnMenu.setOnClickListener(v -> {
@@ -66,20 +74,33 @@ public class ReprocessingActivity extends AppCompatActivity implements Reprocess
             menu.show(getSupportFragmentManager(), "MenuBottomSheet");
         });
 
-        // --- CLIQUE DO BOTÃO GRANDE ---
-        // Quando clicar aqui, o Presenter processa tudo e mostra o Dialog
+        if (swipeRefresh != null) {
+            swipeRefresh.setOnRefreshListener(() -> {
+                swipeRefresh.setRefreshing(false);
+                // Valida sessão e recarrega a lista
+                if (authService != null) authService.validateSession(this);
+                if (presenter != null) presenter.loadPendingSales(userId);
+            });
+        }
+
         btnReprocessar.setOnClickListener(v -> {
             presenter.onReprocessAllClicked();
         });
 
-        // 5. Carrega dados
         presenter.loadPendingSales(userId);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (authService != null) {
+            authService.validateSession(this);
+        }
     }
 
     @Override
     public void showLoading() {
         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
-        // Opcional: Desabilitar o botão para não clicar 2x
         btnReprocessar.setEnabled(false);
         btnReprocessar.setText("PROCESSANDO...");
     }
@@ -89,16 +110,15 @@ public class ReprocessingActivity extends AppCompatActivity implements Reprocess
         if (progressBar != null) progressBar.setVisibility(View.GONE);
         btnReprocessar.setEnabled(true);
         btnReprocessar.setText("REPROCESSAR");
+        if (swipeRefresh != null) swipeRefresh.setRefreshing(false);
     }
 
     @Override
     public void showList(List<ReprocessSaleData> list) {
-        // Atualiza o adapter com a nova lista
         adapter = new ReprocessingAdapter(list);
         recyclerView.setAdapter(adapter);
     }
 
-    // Método para limpar a tela após sucesso
     public void clearList() {
         if (adapter != null) {
             adapter.clearList();
@@ -107,7 +127,7 @@ public class ReprocessingActivity extends AppCompatActivity implements Reprocess
 
     @Override
     public void removeItemFromList(int id) {
-        // Não usado mais nessa lógica de lote, mas mantido pelo contrato
+        // Não usado na lógica de lote atual
     }
 
     @Override
@@ -123,7 +143,6 @@ public class ReprocessingActivity extends AppCompatActivity implements Reprocess
 
     @Override
     public void showMessage(String message) {
-        // SEU DIALOG PERSONALIZADO
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_reprocess_success);
 

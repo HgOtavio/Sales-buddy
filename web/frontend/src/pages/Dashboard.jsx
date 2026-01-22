@@ -14,7 +14,7 @@ import { SalesTable } from "../components/salesTable";
 import { AddUserForm } from "../components/AddUserForm"; 
 import { SidebarItem } from "../components/SidebarItem";
 import { FloatingButtons } from "../components/FloatingButtons";
-import { ConfirmationModal } from "../components/ConfirmationModal";
+import { ConfirmationModal } from "./ConfirmationModal";
 
 import logo from "../assets/logo.svg";
 import usersIcon from "../assets/icon-users.svg";
@@ -105,8 +105,7 @@ export default function Dashboard() {
         background: "#f0f2f5",
         flexDirection: "column"
       }}>
-        <h2>Verificando credenciais...</h2>
-        <p>Aguarde um momento.</p>
+        <h2>Carregando...</h2>
       </div>
     );
   }

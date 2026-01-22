@@ -2,7 +2,17 @@ const PDFDocument = require('pdfkit');
 
 const generateReceiptPDF = (saleData) => {
     return new Promise((resolve, reject) => {
-        const doc = new PDFDocument({ margin: 50 });
+        
+        const items = saleData.saleItems || saleData.items || [];
+        
+        const baseHeight = 600; 
+        
+        const variableHeight = items.length * 30; 
+        
+        const finalHeight = baseHeight + variableHeight;
+
+        const doc = new PDFDocument({ margin: 30, size: [450, finalHeight] });
+        
         let buffers = [];
 
         doc.on('data', buffers.push.bind(buffers));
@@ -12,48 +22,103 @@ const generateReceiptPDF = (saleData) => {
         });
         doc.on('error', (err) => reject(err));
 
-      
-        doc.fillColor('#074A82').fontSize(20).text('COMPROVANTE DE VENDA', { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(10).fillColor('black').text(`Venda #${saleData.id}`, { align: 'center' });
-        doc.moveDown();
+        const COLORS = {
+            BACKGROUND: '#fffbe6',
+            TEXT: '#707070',
+            LABEL: '#888888',
+            LINE: '#cccccc'
+        };
 
-        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-        doc.moveDown();
+        const FONTS = {
+            REGULAR: 'Helvetica',
+            BOLD: 'Helvetica-Bold'
+        };
 
-        doc.fontSize(12).font('Helvetica-Bold').text('Dados do Cliente');
-        doc.font('Helvetica').fontSize(10);
-        doc.text(`Nome: ${saleData.clientName || 'Consumidor'}`);
-        doc.text(`CPF: ${saleData.clientCpf || 'Não informado'}`);
-        doc.text(`Email: ${saleData.clientEmail || '-'}`);
-        doc.moveDown();
+        doc.rect(0, 0, doc.page.width, doc.page.height).fill(COLORS.BACKGROUND);
+        doc.fillColor(COLORS.TEXT);
 
-        doc.fontSize(12).font('Helvetica-Bold').text('Itens da Venda');
-        doc.moveDown(0.5);
+        let currentY = 40; 
+        const leftColX = 30;       
+        const rightColX = 260;     
+        const usableWidth = 390;   
 
-        const items = saleData.saleItems || saleData.items || [];
-        const formatMoney = (val) => `R$ ${parseFloat(val || 0).toFixed(2).replace('.', ',')}`;
+        doc.fontSize(9).font(FONTS.BOLD).fillColor(COLORS.LABEL).text('NOME', leftColX, currentY);
+        doc.fontSize(14).font(FONTS.BOLD).fillColor(COLORS.TEXT)
+            .text((saleData.clientName || 'Consumidor Final').toUpperCase(), leftColX, currentY + 15, { width: 220 });
 
-        items.forEach((item) => {
-            const totalItem = (item.quantity || 1) * (item.price || 0);
-            
-            doc.font('Helvetica').fontSize(10).text(
-                `${item.quantity}x ${item.productName} - ${formatMoney(item.price)} (un)`, 
-                { continued: true }
-            );
-            doc.text(formatMoney(totalItem), { align: 'right' });
+        doc.fontSize(9).font(FONTS.BOLD).fillColor(COLORS.LABEL).text('CPF', rightColX, currentY);
+        doc.fontSize(14).font(FONTS.BOLD).fillColor(COLORS.TEXT)
+            .text(saleData.clientCpf || 'Não informado', rightColX, currentY + 15);
+
+        currentY += 50; 
+        doc.fontSize(9).font(FONTS.BOLD).fillColor(COLORS.LABEL).text('EMAIL', leftColX, currentY);
+        doc.fontSize(13).font(FONTS.BOLD).fillColor(COLORS.TEXT)
+            .text((saleData.clientEmail || '-').toUpperCase(), leftColX, currentY + 15);
+
+        currentY += 40;
+        doc.moveTo(leftColX, currentY).lineTo(leftColX + usableWidth, currentY)
+            .strokeColor(COLORS.LABEL).lineWidth(1).stroke();
+     
+        currentY += 20;
+        doc.fontSize(10).font(FONTS.BOLD).fillColor(COLORS.LABEL);
+        doc.text('ITEM', leftColX, currentY);
+        doc.text('DESCRIÇÃO', leftColX + 40, currentY);
+
+        currentY += 25;
+
+        items.forEach((item, index) => {
+            const prodName = item.productName || item.name || "Item sem nome";
+            const idxStr = String(index + 1).padStart(2, '0');
+
+            doc.fontSize(14).font(FONTS.BOLD).fillColor(COLORS.TEXT).text(idxStr, leftColX, currentY);
+            doc.text(prodName, leftColX + 40, currentY, { width: 350 });
+
+            currentY += 25; 
         });
 
-        doc.moveDown();
-        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-        doc.moveDown();
+        if (items.length === 0) {
+            doc.fontSize(14).font(FONTS.BOLD).fillColor(COLORS.TEXT).text('01', leftColX, currentY);
+            doc.text('Venda Avulsa', leftColX + 40, currentY);
+            currentY += 25;
+        }
 
-        const total = saleData.saleValue || saleData.totalValue || 0;
-        doc.fontSize(14).font('Helvetica-Bold').fillColor('#074A82');
-        doc.text(`TOTAL: ${formatMoney(total)}`, { align: 'right' });
+        currentY += 15;
+        doc.moveTo(leftColX, currentY).lineTo(leftColX + usableWidth, currentY)
+            .strokeColor(COLORS.LABEL).lineWidth(1).stroke();
 
-        doc.moveDown(2);
-        doc.fontSize(8).fillColor('gray').text('Gerado automaticamente por Sales-Buddy', { align: 'center' });
+        currentY += 40; 
+        
+        const formatMoney = (val) => `R$ ${parseFloat(val || 0).toFixed(2).replace('.', ',')}`;
+
+        const valorVenda = parseFloat(saleData.saleValue || saleData.totalValue || 0);
+        const valorRecebido = parseFloat(saleData.receivedValue || saleData.amountPaid || saleData.recebido || 0);
+        
+        let valorTroco = parseFloat(saleData.change || saleData.troco || 0);
+        
+        if (valorTroco === 0 && valorRecebido > valorVenda) {
+            valorTroco = valorRecebido - valorVenda;
+        }
+
+        const drawTotalRow = (label, value, y) => {
+            doc.fontSize(12).font(FONTS.BOLD).fillColor(COLORS.TEXT).text(label, leftColX, y);
+            doc.fontSize(16).font(FONTS.BOLD).fillColor(COLORS.TEXT)
+                .text(formatMoney(value), leftColX, y - 2, { align: 'right', width: usableWidth });
+        };
+
+        drawTotalRow('Valor venda', valorVenda, currentY);
+        currentY += 30;
+        
+        drawTotalRow('Valor recebido', valorRecebido, currentY);
+        currentY += 30;
+        
+        drawTotalRow('Troco devido', valorTroco, currentY);
+
+        const footerY = doc.page.height - 60; 
+        
+        doc.fontSize(10).font(FONTS.REGULAR).fillColor(COLORS.LABEL)
+          .text(`Venda Nº     `, leftColX, footerY, { continued: true, align: 'center', width: usableWidth })
+           .font(FONTS.BOLD).fillColor(COLORS.TEXT)
+           .text(saleData.id || saleData.saleId || '000');
 
         doc.end();
     });

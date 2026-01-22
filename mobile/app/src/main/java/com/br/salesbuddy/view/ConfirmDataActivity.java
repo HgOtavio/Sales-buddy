@@ -75,7 +75,13 @@ public class ConfirmDataActivity extends AppCompatActivity implements ConfirmDat
 
         btnAlterar.setOnClickListener(v -> finish()); // Botão Alterar volta para editar
 
-        btnConfirmar.setOnClickListener(v -> presenter.confirmSale());
+        btnConfirmar.setOnClickListener(v -> {
+            int idDoUsuario = getIntent().getIntExtra("ID_DO_LOJISTA", -1);
+
+            Log.d("DEBUG_VENDA", "CLICOU EM FINALIZAR! O ID DO USUÁRIO AQUI É: " + idDoUsuario);
+
+            presenter.confirmSale();
+        });
 
         btnMenu.setOnClickListener(v -> {
             int userId = getIntent().getIntExtra("ID_DO_LOJISTA", -1);
@@ -103,6 +109,7 @@ public class ConfirmDataActivity extends AppCompatActivity implements ConfirmDat
     public void hideLoading() {
         btnConfirmar.setEnabled(true);
         btnConfirmar.setText("FINALIZAR");
+
     }
 
     @Override
