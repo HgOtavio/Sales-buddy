@@ -1,6 +1,30 @@
 const { Op } = require('sequelize');
 const User = require('../models/User');
 
+const isValidCPF = (cpf) => {
+    if (!cpf) return false;
+
+    const strCPF = String(cpf).replace(/[^\d]+/g, '');
+
+    if (strCPF.length !== 11 || /^(\d)\1+$/.test(strCPF)) return false;
+
+    let sum = 0;
+    let remainder;
+
+    for (let i = 1; i <= 9; i++) sum = sum + parseInt(strCPF.substring(i - 1, i)) * (11 - i);
+    remainder = (sum * 10) % 11;
+    if ((remainder === 10) || (remainder === 11)) remainder = 0;
+    if (remainder !== parseInt(strCPF.substring(9, 10))) return false;
+
+    sum = 0;
+    for (let i = 1; i <= 10; i++) sum = sum + parseInt(strCPF.substring(i - 1, i)) * (12 - i);
+    remainder = (sum * 10) % 11;
+    if ((remainder === 10) || (remainder === 11)) remainder = 0;
+    if (remainder !== parseInt(strCPF.substring(10, 11))) return false;
+
+    return true;
+};
+
 const isValidCNPJ = (cnpj) => {
     if (!cnpj) return false;
 
@@ -34,10 +58,12 @@ const isValidCNPJ = (cnpj) => {
 };
 
 const isValidEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) return false;
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|com\.br|net|org|edu)$/i;
     if (!emailRegex.test(email)) return false;
     
-    const blockedDomains = ['tempmail.com', '10minutemail.com'];
+    const blockedDomains = ['tempmail.com', '10minutemail.com', 'mailinator.com'];
     const domain = email.split('@')[1];
     return !blockedDomains.includes(domain);
 };
@@ -73,6 +99,7 @@ const checkDuplicates = async (user, email, taxId, company, excludeUserId = null
 };
 
 module.exports = {
+    isValidCPF,
     isValidCNPJ,
     isValidEmail,
     generateStrongPassword,

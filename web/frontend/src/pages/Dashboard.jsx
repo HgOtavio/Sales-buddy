@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react"; // <-- useCallback adicionado
 import { useNavigate } from "react-router-dom";
 import "../styles/dashboard.css";
 
 import { useUsers } from "../hooks/useUsers";
 import { useFloatingActions } from "../hooks/useFloatingActions"; 
 import api from "../services/api"; 
+import { ENDPOINTS } from "../services/endpoints"; // <--- ADICIONE ESTA LINHA
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -51,11 +52,11 @@ export default function Dashboard() {
     isAddDisabled 
   } = useFloatingActions(setActive, refreshUsers, editingUser, active);
 
-  const performLogout = () => {
+  const performLogout = useCallback(() => {
     localStorage.removeItem('salesToken'); 
     localStorage.removeItem('userData');  
     navigate('/login');     
-  };
+  }, [navigate]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -67,9 +68,7 @@ export default function Dashboard() {
       }
 
       try {
-        await api.get('/auth/verify', {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.get(ENDPOINTS.AUTH.VERIFY); 
 
         setIsLoading(false);
 
@@ -79,7 +78,7 @@ export default function Dashboard() {
     };
 
     checkAuth();
-  }, [navigate]);
+  }, [performLogout]);
 
   const handleEditUser = (user) => {
     setEditingUser(user); 
@@ -93,6 +92,7 @@ export default function Dashboard() {
 
   const handleViewReceipt = (venda) => {
     setSelectedSale(venda); 
+    console.log("Venda selecionada para visualização:", venda);
   };
 
   if (isLoading) {

@@ -1,5 +1,4 @@
 const userService = require('../services/userService');
-
 const { handleError } = require('../utils/errorHandler');
 const { validateRequiredFields } = require('../utils/validators');
 
@@ -18,15 +17,12 @@ exports.register = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
     try {
-        // 1. Valida se o ID veio no corpo
         const errorMsg = validateRequiredFields(req.body, ['id']);
         if (errorMsg) return res.status(400).json({ error: "ID obrigatório", message: errorMsg });
 
-        // 2. Separa o ID do resto dos dados
         const { id, ...data } = req.body;
         const requesterId = req.user ? req.user.id : null;
         
-        // 3. Verifica se tem dados para atualizar além do ID
         if (Object.keys(data).length === 0) {
             return res.status(400).json({ 
                 error: "Nada para atualizar", 
@@ -108,13 +104,18 @@ exports.resetPassword = async (req, res) => {
 exports.verifySession = async (req, res) => {
     try {
         if (!req.user || !req.user.id) {
-            return res.status(401).json({ error: "Sessão inválida (Token sem ID)." });
+            return res.status(401).json({ valid: false }); 
         }
 
         const user = await userService.verifySessionUser(req.user.id);
-        return res.json({ valid: true, user });
+        const encodedUser = Buffer.from(JSON.stringify(user)).toString('base64');
+
+        return res.json({ 
+            valid: true, 
+            data: encodedUser 
+        });
 
     } catch (error) {
-        handleError(res, error);
+        return res.status(401).json({ valid: false });
     }
 };

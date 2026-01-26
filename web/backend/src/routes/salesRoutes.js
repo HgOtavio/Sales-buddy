@@ -3,7 +3,7 @@ const router = express.Router();
 const saleController = require('../controllers/saleController');
 const authMiddleware = require('../middlewares/auth'); 
 
-router.post('/', authMiddleware.verifyToken, saleController.createSale);
+router.post('/create', authMiddleware.verifyToken, saleController.createSale);
 
 router.post('/email', authMiddleware.verifyToken, saleController.sendReceipt);
 

@@ -11,7 +11,6 @@ export function useUsers() {
 
   const refreshUsers = useCallback(async () => {
     try {
-      // GET continua igual (sem body)
       const response = await api.get(ENDPOINTS.AUTH.USERS);
       setUsers(response.data);
     } catch (error) {
@@ -59,13 +58,10 @@ export function useUsers() {
         return;
       }
 
-      // --- MUDANÇA PRINCIPAL AQUI ---
-      // Como o Backend espera { "id": 5 } no Body,
-      // e o Axios exige que o body do DELETE esteja dentro de uma chave "data".
       
       await Promise.all(selectedIds.map(id => 
           api.delete(ENDPOINTS.AUTH.USERS, {
-              data: { id: id } // <--- O "pulo do gato" do Axios para delete com body
+              data: { id: id } 
           })
       ));
 

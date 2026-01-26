@@ -48,7 +48,6 @@ public class ConfirmItemsAdapter extends RecyclerView.Adapter<ConfirmItemsAdapte
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            // Certifique-se que estes IDs existem no XML acima
             tvItemIndex = itemView.findViewById(R.id.tvItemIndex);
             tvItemName = itemView.findViewById(R.id.tvItemName);
         }

@@ -2,9 +2,12 @@ package com.br.salesbuddy.view;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.ConnectivityManager;
+import android.net.Network;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -13,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,6 +27,7 @@ import com.br.salesbuddy.contract.ReprocessingContract;
 import com.br.salesbuddy.model.ReprocessSaleData;
 import com.br.salesbuddy.network.AuthService;
 import com.br.salesbuddy.presenter.ReprocessingPresenter;
+import com.br.salesbuddy.utils.NetworkUtils;
 import com.br.salesbuddy.view.adapter.ReprocessingAdapter;
 
 import java.util.ArrayList;
@@ -40,6 +45,9 @@ public class ReprocessingActivity extends AppCompatActivity implements Reprocess
     private AuthService authService;
     private int userId;
 
+    private ConnectivityManager connectivityManager;
+    private ConnectivityManager.NetworkCallback networkCallback;
+
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +61,6 @@ public class ReprocessingActivity extends AppCompatActivity implements Reprocess
         ImageView btnMenu = findViewById(R.id.btn_menu);
         btnReprocessar = findViewById(R.id.btnFinalizar);
 
-        // Certifique-se de ter adicionado o SwipeRefreshLayout no XML com este ID
         swipeRefresh = findViewById(R.id.swipeRefresh);
         if (swipeRefresh != null) {
             swipeRefresh.setColorSchemeResources(R.color.black);
@@ -77,25 +84,58 @@ public class ReprocessingActivity extends AppCompatActivity implements Reprocess
         if (swipeRefresh != null) {
             swipeRefresh.setOnRefreshListener(() -> {
                 swipeRefresh.setRefreshing(false);
-                // Valida sessão e recarrega a lista
                 if (authService != null) authService.validateSession(this);
                 if (presenter != null) presenter.loadPendingSales(userId);
             });
         }
 
-        btnReprocessar.setOnClickListener(v -> {
-            presenter.onReprocessAllClicked();
-        });
+        btnReprocessar.setOnClickListener(v -> presenter.onReprocessAllClicked());
 
         presenter.loadPendingSales(userId);
+
+        setupNetworkListener();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (connectivityManager != null && networkCallback != null) {
+            connectivityManager.registerDefaultNetworkCallback(networkCallback);
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
+        if (!NetworkUtils.isConnected(this)) {
+            navigateToConnectionError();
+            return;
+        }
+
         if (authService != null) {
             authService.validateSession(this);
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (connectivityManager != null && networkCallback != null) {
+            connectivityManager.unregisterNetworkCallback(networkCallback);
+        }
+    }
+
+    private void setupNetworkListener() {
+        connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        networkCallback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onLost(@NonNull Network network) {
+                super.onLost(network);
+                runOnUiThread(() -> navigateToConnectionError());
+            }
+        };
     }
 
     @Override
@@ -127,7 +167,6 @@ public class ReprocessingActivity extends AppCompatActivity implements Reprocess
 
     @Override
     public void removeItemFromList(int id) {
-        // Não usado na lógica de lote atual
     }
 
     @Override

@@ -1,5 +1,4 @@
 const nodemailer = require('nodemailer');
-// Importa a função do arquivo que criamos acima
 const { generateReceiptPDF } = require('../utils/pdfGenerator'); 
 
 const transporter = nodemailer.createTransport({

@@ -2,22 +2,20 @@ package com.br.salesbuddy.network;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
 
-import com.br.salesbuddy.BuildConfig;
+import com.br.salesbuddy.model.LoginRequest;
+import com.br.salesbuddy.model.LoginResponse;
 import com.br.salesbuddy.utils.SessionManager;
 
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class AuthService {
 
@@ -26,57 +24,39 @@ public class AuthService {
         void onError(String errorMessage);
     }
 
+    private AuthApi authApi;
+
+    public AuthService() {
+        authApi = RetrofitClient.getClient().create(AuthApi.class);
+    }
+
     public void login(Context context, String user, String password, LoginCallback callback) {
-        new Thread(() -> {
-            HttpURLConnection conn = null;
-            try {
-                URL url = new URL(BuildConfig.BASE_URL + "/auth/login");
+        LoginRequest request = new LoginRequest(user, password);
 
-                conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-                conn.setRequestProperty("Accept", "application/json");
-                conn.setDoOutput(true);
-                conn.setConnectTimeout(5000);
+        authApi.login(request).enqueue(new Callback<LoginResponse>() {
+            @Override
+            public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    LoginResponse loginData = response.body();
+                    String token = loginData.token;
 
-                JSONObject jsonParam = new JSONObject();
-                jsonParam.put("user", user);
-                jsonParam.put("password", password);
-
-                DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-                os.write(jsonParam.toString().getBytes("UTF-8"));
-                os.flush();
-                os.close();
-
-                int responseCode = conn.getResponseCode();
-
-                if (responseCode == 200) {
-                    String responseText = readStream(conn.getInputStream());
-                    JSONObject jsonResponse = new JSONObject(responseText);
-
-                    String token = jsonResponse.optString("token", "");
-
-                    int userId = -1;
+                    int userId = loginData.userId != null ? loginData.userId : (loginData.id != null ? loginData.id : -1);
                     String userName = "Usuário";
 
                     try {
                         String[] split = token.split("\\.");
                         if (split.length > 1) {
-                            String body = getJson(split[1]);
+                            String body = getJsonFromJwt(split[1]);
                             JSONObject jsonBody = new JSONObject(body);
 
-                            userId = jsonBody.optInt("id", -1);
+                            if (userId == -1) userId = jsonBody.optInt("id", -1);
                             userName = jsonBody.optString("name", "Usuário");
 
                             Log.d("JWT_DECODE", "ID extraído: " + userId + " / Nome: " + userName);
                         }
                     } catch (Exception e) {
-                        e.printStackTrace();
                         Log.e("JWT_ERROR", "Erro ao decodificar token: " + e.getMessage());
                     }
-
-                    if (userId == -1) userId = jsonResponse.optInt("userId", -1);
-                    if (userId == -1) userId = jsonResponse.optInt("id", -1);
 
                     SharedPreferences prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
                     prefs.edit()
@@ -84,81 +64,55 @@ public class AuthService {
                             .putInt("savedUserId", userId)
                             .apply();
 
-                    int finalId = userId;
-                    String finalName = userName;
-                    String finalToken = token;
-
-                    new Handler(Looper.getMainLooper()).post(() ->
-                            callback.onSuccess(finalId, finalName, finalToken)
-                    );
+                    callback.onSuccess(userId, userName, token);
 
                 } else {
-                    String errorText = readStream(conn.getErrorStream());
-                    String msg = "Erro desconhecido";
+                    String errorMsg = "Erro desconhecido";
                     try {
-                        JSONObject jsonError = new JSONObject(errorText);
-                        if (jsonError.has("message")) msg = jsonError.getString("message");
-                        else if (jsonError.has("error")) msg = jsonError.getString("error");
+                        if (response.errorBody() != null) {
+                            JSONObject jsonError = new JSONObject(response.errorBody().string());
+                            if (jsonError.has("message")) errorMsg = jsonError.getString("message");
+                            else if (jsonError.has("error")) errorMsg = jsonError.getString("error");
+                        } else {
+                            errorMsg = "Erro " + response.code();
+                        }
                     } catch (Exception e) {
-                        msg = "Erro " + responseCode;
+                        errorMsg = "Erro " + response.code();
                     }
-
-                    String finalMsg = msg;
-                    new Handler(Looper.getMainLooper()).post(() -> callback.onError(finalMsg));
+                    callback.onError(errorMsg);
                 }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                new Handler(Looper.getMainLooper()).post(() -> callback.onError("Erro de conexão: " + e.getMessage()));
-            } finally {
-                if (conn != null) conn.disconnect();
             }
-        }).start();
+
+            @Override
+            public void onFailure(Call<LoginResponse> call, Throwable t) {
+                callback.onError("Erro de conexão: " + t.getMessage());
+            }
+        });
     }
 
     public void validateSession(Context context) {
-        new Thread(() -> {
-            HttpURLConnection conn = null;
-            try {
-                SharedPreferences prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
-                String token = prefs.getString("salesToken", null);
+        SharedPreferences prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
+        String token = prefs.getString("salesToken", null);
 
-                if (token == null) return;
+        if (token == null) return;
 
-                URL url = new URL(BuildConfig.BASE_URL + "/auth/verify");
-
-                conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-                conn.setRequestProperty("Authorization", "Bearer " + token);
-                conn.setRequestProperty("Content-Type", "application/json");
-                conn.setConnectTimeout(5000);
-
-                int codigo = conn.getResponseCode();
-
-                if (codigo == 401 || codigo == 403) {
+        authApi.validateSession("Bearer " + token).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.code() == 401 || response.code() == 403) {
                     SessionManager.forceLogout(context, "Sessão inválida. Por favor, entre novamente.");
                 }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (conn != null) conn.disconnect();
             }
-        }).start();
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Log.e("AuthService", "Falha na validação do token: " + t.getMessage());
+            }
+        });
     }
 
-    private String getJson(String strEncoded) throws UnsupportedEncodingException {
+    private String getJsonFromJwt(String strEncoded) throws UnsupportedEncodingException {
         byte[] decodedBytes = Base64.decode(strEncoded, Base64.URL_SAFE);
         return new String(decodedBytes, "UTF-8");
-    }
-
-    private String readStream(java.io.InputStream in) throws java.io.IOException {
-        if (in == null) return "";
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) sb.append(line);
-        reader.close();
-        return sb.toString();
     }
 }

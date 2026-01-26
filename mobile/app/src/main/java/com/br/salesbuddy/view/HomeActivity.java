@@ -1,11 +1,15 @@
 package com.br.salesbuddy.view;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.Network;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ImageView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -15,6 +19,7 @@ import com.br.salesbuddy.R;
 import com.br.salesbuddy.contract.HomeContract;
 import com.br.salesbuddy.network.AuthService;
 import com.br.salesbuddy.presenter.HomePresenter;
+import com.br.salesbuddy.utils.NetworkUtils;
 
 public class HomeActivity extends AppCompatActivity implements HomeContract.View {
 
@@ -22,6 +27,10 @@ public class HomeActivity extends AppCompatActivity implements HomeContract.View
     private ImageView ivTopIcon;
     private HomePresenter presenter;
     private AuthService authService;
+
+    // Variáveis para o monitoramento em tempo real
+    private ConnectivityManager connectivityManager;
+    private ConnectivityManager.NetworkCallback networkCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,13 +51,38 @@ public class HomeActivity extends AppCompatActivity implements HomeContract.View
         }
 
         setupListeners();
+        setupNetworkListener();
+    }
+
+    // Registra o vigia quando a tela está visível
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (connectivityManager != null && networkCallback != null) {
+            connectivityManager.registerDefaultNetworkCallback(networkCallback);
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
+        if (!NetworkUtils.isConnected(this)) {
+            navigateToConnectionError();
+            return;
+        }
+
         if (authService != null) {
             authService.validateSession(this);
+        }
+    }
+
+    // Desliga o vigia quando o usuário sai do app (economiza bateria)
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (connectivityManager != null && networkCallback != null) {
+            connectivityManager.unregisterNetworkCallback(networkCallback);
         }
     }
 
@@ -62,6 +96,19 @@ public class HomeActivity extends AppCompatActivity implements HomeContract.View
         btnRegisterSales.setOnClickListener(v -> presenter.onRegisterSalesClicked());
         btnReprocess.setOnClickListener(v -> presenter.onReprocessClicked());
         ivTopIcon.setOnClickListener(v -> presenter.onMenuClicked());
+    }
+
+    private void setupNetworkListener() {
+        connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        networkCallback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onLost(@NonNull Network network) {
+                super.onLost(network);
+                // Se a rede for perdida, muda de tela na hora (usando a Thread principal da UI)
+                runOnUiThread(() -> navigateToConnectionError());
+            }
+        };
     }
 
     private void setupWindowInsets() {

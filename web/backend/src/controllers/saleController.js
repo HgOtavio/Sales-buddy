@@ -1,21 +1,18 @@
 const saleService = require('../services/saleService');
 const emailService = require('../services/emailService');
-const { handleError } = require('../utils/errorHandler'); // Importa o tratador de erros
+const { handleError } = require('../utils/errorHandler'); 
 const { validateRequiredFields } = require('../utils/validators');
-const { generateReceiptPDF } = require('../utils/pdfGenerator'); // <--- IMPORTANTE: Seu gerador de PDF
+const { generateReceiptPDF } = require('../utils/pdfGenerator'); 
 
 exports.createSale = async (req, res) => {
     try {
-        // Validação básica de campos
-        const errorMsg = validateRequiredFields(req.body, ['userId', 'saleValue', 'receivedValue']);
+        const errorMsg = validateRequiredFields(req.body, ['saleValue', 'receivedValue']);
         if (errorMsg) {
-            // Lança erro para cair no catch e usar o handleError
             throw { status: 400, message: `Dados Incompletos: ${errorMsg}` };
         }
 
         const { saleValue, receivedValue, items } = req.body;
 
-        // Validação de Negócio: Valores negativos
         if (parseFloat(saleValue) < 0 || parseFloat(receivedValue) < 0) {
             throw { 
                 status: 400, 
@@ -23,19 +20,21 @@ exports.createSale = async (req, res) => {
             };
         }
 
-        // Validação de Negócio: Itens
         if (!items || !Array.isArray(items) || items.length === 0) {
-             throw { status: 400, message: "A venda não pode ser vazia. Adicione itens." };
+            throw { status: 400, message: "A venda não pode ser vazia. Adicione itens." };
         }
 
-        const result = await saleService.createNewSale(req.body);
-        
+        const saleDataToSave = {
+            ...req.body,
+            userId: req.userId 
+        };
+
+        const result = await saleService.createNewSale(saleDataToSave);
         
         if (req.body.clientEmail) {
-            
-             const fullSaleData = await saleService.getSaleById(result.saleId);
-             emailService.sendSaleReceipt(req.body.clientEmail, fullSaleData)
-                .catch(err => console.error(" Erro silencioso ao enviar e-mail:", err.message));
+            const fullSaleData = await saleService.getSaleById(result.saleId);
+            emailService.sendSaleReceipt(req.body.clientEmail, fullSaleData)
+                .catch(err => console.error("Erro silencioso ao enviar e-mail:", err.message));
         }
 
         return res.status(201).json(result);
@@ -47,13 +46,10 @@ exports.createSale = async (req, res) => {
 
 exports.getDashboard = async (req, res) => {
     try {
-       
-        const userId = req.user ? req.user.id : req.body.userId; 
+        const sales = await saleService.getAllSales(); 
         
-        if (!userId) throw { status: 400, message: "User ID não fornecido." };
+        return res.json(sales);
 
-        const sales = await saleService.getSalesByUser(userId);
-        res.json(sales);
     } catch (error) {
         handleError(res, error);
     }
@@ -81,7 +77,6 @@ exports.sendReceipt = async (req, res) => {
         
         const saleObj = await saleService.getSaleById(saleId);
         
-        
         const saleData = (saleObj && typeof saleObj.toJSON === 'function') ? saleObj.toJSON() : saleObj;
 
         if (!saleData.clientEmail || saleData.clientEmail.trim() === "") {
@@ -106,21 +101,17 @@ exports.downloadReceipt = async (req, res) => {
 
         if (!saleId) throw { status: 400, message: "ID da venda é obrigatório para download." };
         
-       
         const saleObj = await saleService.getSaleById(saleId);
         const saleData = (saleObj && typeof saleObj.toJSON === 'function') ? saleObj.toJSON() : saleObj;
 
-      
         const pdfBuffer = await generateReceiptPDF(saleData);
 
-       
         res.set({
             'Content-Type': 'application/pdf',
             'Content-Length': pdfBuffer.length,
             'Content-Disposition': `attachment; filename="comprovante_${saleId}.pdf"`
         });
 
-     
         res.send(pdfBuffer);
 
     } catch (error) {

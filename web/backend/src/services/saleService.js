@@ -1,23 +1,35 @@
 const { sequelize } = require('../config/dbConfig');
 const { Sale, SaleItem } = require('../models');
+const { isValidCPF, isValidEmail } = require('../utils/userHelpers'); 
 
 exports.createNewSale = async (data) => {
     const transaction = await sequelize.transaction();
 
     try {
-        // 1. Sanitização dos dados de entrada (Evita NULL e UNDEFINED)
-        // Se não vier nome, define como "Consumidor Final". Se não vier CPF/Email, define como string vazia.
-        const userId = data.userId; // Esse é obrigatório, deve vir validado do controller
-        const clientName = data.clientName || "Consumidor Final"; 
-        const clientCpf = data.clientCpf || ""; 
-        const clientEmail = data.clientEmail || "";
-        
-        // Garante que são números, prevenindo NaN
-        const vSale = parseFloat(data.saleValue) || 0;
-        const vReceived = parseFloat(data.receivedValue) || 0;
-        const items = data.items || [];
+        const requiredFields = ['userId', 'clientName', 'clientCpf', 'clientEmail', 'saleValue', 'receivedValue', 'items'];
+        for (const field of requiredFields) {
+            const value = typeof data[field] === 'string' ? data[field].trim() : data[field];
+            
+            if (value === undefined || value === null || value === "") {
+                throw { status: 400, message: `O campo '${field}' é obrigatório e não pode ficar em branco.` };
+            }
+        }
 
-        // 2. Validações de Regra de Negócio
+        if (!isValidEmail(data.clientEmail.trim())) {
+            throw { status: 400, message: "E-mail inválido. Verifique se o domínio está correto (ex: .com ou .com.br)." };
+        }
+
+        if (!isValidCPF(data.clientCpf)) {
+            throw { status: 400, message: "CPF inválido. Verifique os números digitados." };
+        }
+
+        const vSale = parseFloat(data.saleValue);
+        const vReceived = parseFloat(data.receivedValue);
+
+        if (isNaN(vSale) || isNaN(vReceived)) {
+            throw { status: 400, message: "Os campos 'saleValue' e 'receivedValue' devem ser números válidos." };
+        }
+
         if (vReceived < vSale) {
             throw { 
                 status: 402, 
@@ -26,42 +38,43 @@ exports.createNewSale = async (data) => {
             };
         }
 
-        if (!items || items.length === 0) {
-            throw { status: 400, message: "A venda deve conter pelo menos um item." };
+        if (!Array.isArray(data.items) || data.items.length === 0) {
+            throw { status: 400, message: "A venda deve conter uma lista com pelo menos um item." };
         }
 
         const calculatedChange = vReceived - vSale;
 
         const newSale = await Sale.create({
-            userId,
-            clientName,  
-            clientCpf,  
-            clientEmail,
+            userId: data.userId,
+            clientName: data.clientName.trim(),  
+            clientCpf: data.clientCpf.replace(/[^\d]+/g, ''), 
+            clientEmail: data.clientEmail.trim().toLowerCase(), 
             saleValue: vSale,
             receivedValue: vReceived,
             change: calculatedChange
         }, { transaction });
 
-        if (items && Array.isArray(items) && items.length > 0) {
-            const itemList = items.map(item => {
-                const qtd = parseFloat(item.quantity) || 1;
-                const price = parseFloat(item.price || item.unitPrice) || 0; 
-                
-                let prodName = item.productName || item.name;
-                if (!prodName && typeof item === 'string') prodName = item;
-                if (!prodName) prodName = "Produto Genérico"; 
+        const itemList = data.items.map((item, index) => {
+            const prodName = item.productName || item.name; 
+            const qtd = parseFloat(item.quantity);
+            const price = parseFloat(item.unitPrice || item.price); 
 
-                return {
-                    saleId: newSale.id,
-                    productName: prodName,
-                    quantity: qtd,
-                    unitPrice: price,
-                    totalItemPrice: price * qtd
-                };
-            });
+            if (!prodName || typeof prodName !== 'string' || prodName.trim() === "") {
+                throw { status: 400, message: `Nome do produto ausente ou em branco na posição ${index + 1}.` };
+            }
+            if (isNaN(qtd) || qtd <= 0) throw { status: 400, message: `Quantidade inválida no item '${prodName}'. Deve ser maior que zero.` };
+            if (isNaN(price) || price < 0) throw { status: 400, message: `Preço inválido no item '${prodName}'. Não pode ser negativo.` };
 
-            await SaleItem.bulkCreate(itemList, { transaction });
-        }
+            return {
+                saleId: newSale.id,
+                productName: prodName.trim(),
+                quantity: qtd,
+                unitPrice: price,
+                totalItemPrice: price * qtd
+            };
+        });
+
+        await SaleItem.bulkCreate(itemList, { transaction });
 
         await transaction.commit();
 
@@ -100,4 +113,15 @@ exports.getSaleById = async (saleId) => {
     if (!sale) throw { status: 404, message: "Venda não encontrada." };
     
     return sale;
+};
+
+exports.getAllSales = async () => {
+    return await Sale.findAll({
+        include: [{ 
+            model: SaleItem, 
+            as: 'saleItems',
+            attributes: ['productName', 'unitPrice', 'quantity', 'totalItemPrice']
+        }],
+        order: [['createdAt', 'DESC']]
+    });
 };

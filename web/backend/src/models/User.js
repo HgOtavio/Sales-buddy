@@ -28,6 +28,14 @@ const User = sequelize.define('User', {
             key: 'id'
         },
         allowNull: false
+    },
+    resetToken: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    resetTokenExpires: {
+        type: DataTypes.BIGINT, 
+        allowNull: true,
     }
 }, {
     timestamps: true,

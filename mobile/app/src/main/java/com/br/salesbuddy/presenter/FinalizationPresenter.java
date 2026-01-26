@@ -18,7 +18,6 @@ public class FinalizationPresenter implements FinalizationContract.Presenter {
     private final Context context;
     private final SalesService service;
 
-    // --- MUDANÇA 1: ID agora é Long ---
     private long saleId;
 
     private int userId;
@@ -45,8 +44,6 @@ public class FinalizationPresenter implements FinalizationContract.Presenter {
             return;
         }
 
-        // --- MUDANÇA 2: Recuperar Long do Bundle ---
-        // Deve corresponder ao .putLong() feito no ConfirmDataPresenter
         this.saleId = extras.getLong("ID_VENDA_REAL", 0L);
 
         this.userId = extras.getInt("ID_DO_LOJISTA", -1);
@@ -62,7 +59,6 @@ public class FinalizationPresenter implements FinalizationContract.Presenter {
         String pagoFmt = String.format(Locale.getDefault(), "R$ %.2f", valRecebido);
         String trocoFmt = String.format(Locale.getDefault(), "R$ %.2f", troco);
 
-        // Verifica se é diferente de 0L (Long)
         String idFmt = (saleId != 0L) ? "Venda n° " + saleId : "Venda processada";
 
         this.rawItemsString = extras.getString("ITENS_CONCATENADOS");
@@ -97,44 +93,21 @@ public class FinalizationPresenter implements FinalizationContract.Presenter {
             return;
         }
 
-        // Validação extra do ID (Long)
         if (saleId == 0L) {
-            view.showError("Erro: ID da venda inválido (0).");
+            view.showError("Erro: ID da venda inválido. Não é possível enviar o comprovante.");
             return;
         }
 
-        view.showLoading("Solicitando envio de e-mail...");
+        view.showLoading("Enviando comprovante...");
 
-        Map<String, Object> saleData = new HashMap<>();
-        saleData.put("id", saleId); // Passa o Long aqui, tudo certo
-        saleData.put("clientName", clientName);
-        saleData.put("clientCpf", clientCpf);
-        saleData.put("email", clientEmail);
 
-        saleData.put("saleValue", valVenda);
-        saleData.put("receivedValue", valRecebido);
-        saleData.put("change", troco);
 
-        List<Map<String, Object>> itemsList = new ArrayList<>();
-        if (rawItemsString != null && !rawItemsString.isEmpty()) {
-            Map<String, Integer> counts = new HashMap<>();
-            for (String s : rawItemsString.split(",")) {
-                String name = s.trim();
-                if (!name.isEmpty()) counts.put(name, counts.getOrDefault(name, 0) + 1);
-            }
-            for (Map.Entry<String, Integer> entry : counts.entrySet()) {
-                Map<String, Object> itemObj = new HashMap<>();
-                itemObj.put("productName", entry.getKey());
-                itemObj.put("quantity", entry.getValue());
-                itemObj.put("unitPrice", 0.0);
-                itemsList.add(itemObj);
-            }
-        }
-        saleData.put("items", itemsList);
+        Map<String, Object> requestData = new HashMap<>();
+        requestData.put("saleId", saleId); // Passando o ID correto
 
-        service.requestReceiptEmail(context, saleData, new SalesService.SalesCallback() {
+        service.requestReceiptEmail(context, requestData, new SalesService.SalesCallback() {
             @Override
-            public void onSuccess(long id) { // --- MUDANÇA 3: Callback recebe long ---
+            public void onSuccess(long id) {
                 view.hideLoading();
                 view.showEmailSuccessDialog(clientEmail);
             }

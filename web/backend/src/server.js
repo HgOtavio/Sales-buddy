@@ -26,7 +26,7 @@ app.use(handleUrlErrors);
 
 app.use('/auth', userRoutes);        
 app.use('/companies', companyRoutes); 
-app.use('/vendas', saleRoutes);      
+app.use('/sales', saleRoutes);      
 
 app.use('/reprocessing', verifyToken, reprocessingRoutes);
 

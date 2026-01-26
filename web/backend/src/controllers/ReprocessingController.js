@@ -6,7 +6,6 @@ const { validateRequiredFields } = require('../utils/validators');
 
 module.exports = {
     
-    // 1. Criar um item para reprocessamento (Salvar rascunho/erro)
     async create(req, res) {
         try {
             const errorMsg = validateRequiredFields(req.body, ['clientName', 'saleValue']);
@@ -14,7 +13,7 @@ module.exports = {
 
             const { userId, clientName, saleValue, receivedValue, change, items, errorReason } = req.body;
 
-            // Usa o ID do token se disponível, senão pega do body
+           
             const finalUserId = req.user ? req.user.id : userId;
 
             if (!finalUserId) {
@@ -44,11 +43,9 @@ module.exports = {
         }
     },
 
-    // 2. Listar o que está pendente
     async list(req, res) {
         try {
-            // Lógica: Se o usuário estiver logado, lista os dele.
-            // Se for uma chamada administrativa (opcional), pode passar userId no body.
+         
             const userId = req.user ? req.user.id : req.body.userId;
             
             if (!userId) {
@@ -65,9 +62,7 @@ module.exports = {
         }
     },
 
-    // 3. Aprovar e Mover para Venda
     async approveAndMoveToSale(req, res) {
-        // MUDANÇA: ID vem do Body agora
         const errorMsg = validateRequiredFields(req.body, ['id']);
         if (errorMsg) return res.status(400).json({ error: "ID obrigatório", message: errorMsg });
 

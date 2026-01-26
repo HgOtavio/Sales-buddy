@@ -11,7 +11,7 @@ import java.util.Locale;
 
 public class MaskUtils {
 
-    // --- MÁSCARA DE DINHEIRO (R$) ---
+
     public static TextWatcher moneyMask(final EditText editText) {
         return new TextWatcher() {
             private final WeakReference<EditText> editTextWeakReference = new WeakReference<>(editText);
@@ -37,7 +37,7 @@ public class MaskUtils {
                 isUpdating = true; // Trava
 
                 try {
-                    // 1. Remove tudo que não é número
+                    //  Remove tudo que não é número
                     String cleanString = s.replaceAll("[^0-9]", "");
 
                     if (cleanString.isEmpty()) {
@@ -46,25 +46,25 @@ public class MaskUtils {
                         return;
                     }
 
-                    // 2. Transforma em BigDecimal e divide por 100 para criar os centavos
+                    // Transforma em BigDecimal e divide por 100 para criar os centavos
                     BigDecimal parsed = new BigDecimal(cleanString).divide(new BigDecimal(100));
 
-                    // 3. Formata para Brasil (R$ 1.230,50)
+                    // Formata para Brasil (R$ 1.230,50)
                     String formatted = NumberFormat.getCurrencyInstance(new Locale("pt", "BR")).format(parsed);
 
                     editText.setText(formatted);
                     editText.setSelection(formatted.length()); // Move cursor pro final
 
                 } catch (Exception e) {
-                    // Ignora erros
+
                 }
 
-                isUpdating = false; // Destrava
+                isUpdating = false;
             }
         };
     }
 
-    // --- MÁSCARA DE CPF ---
+
     public static TextWatcher cpfMask(final EditText editText) {
         return new TextWatcher() {
             boolean isUpdating;
@@ -109,11 +109,9 @@ public class MaskUtils {
         };
     }
 
-    // Helper para limpar formatação antes de enviar
     public static String unmaskMoney(String value) {
         if (value == null || value.isEmpty()) return "0";
-        // Remove R$, pontos e espaços, troca vírgula por ponto
-        // Ex: "R$ 1.200,50" -> "1200.50"
+
         return value.replaceAll("[^0-9,]", "").replace(",", ".");
     }
 }

@@ -1,21 +1,20 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { toast } from 'react-toastify';
-import api from "../services/api";
-import { ENDPOINTS } from "../services/endpoints";
+import api from "../services/api"; 
+import { ENDPOINTS } from "../services/endpoints"; 
 
-export function useResetPassword() {
+export function useResetPassword({ onSuccess }) {
   const [token, setToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false); 
   
   const newPassRef = useRef(null);
   const confirmPassRef = useRef(null);
-  const navigate = useNavigate();
 
   async function handleReset() {
     if (!token || !newPassword || !confirmPassword) {
-      toast.error("Preencha todos os campos.");
+      toast.warning("Preencha todos os campos.");
       return;
     }
 
@@ -24,19 +23,38 @@ export function useResetPassword() {
       return;
     }
 
-    try {
-      const response = await api.post(ENDPOINTS.AUTH.RESET_PASSWORD, {
-        token,
-        newPassword,
-        confirmPassword
-      });
+    setIsLoading(true);
 
-      toast.success(response.data.message || "Senha definida com sucesso!");
-      
+    const request = api.post(ENDPOINTS.AUTH.RESET_PASSWORD, {
+      token,
+      newPassword,
+      confirmPassword
+    });
+
+    try {
+      await toast.promise(
+        request,
+        {
+          pending: "Redefinindo senha...",
+          success: "Senha definida com sucesso! Faça seu login.",
+          error: {
+            render({ data }) {
+              return data.response?.data?.error || "Erro ao resetar senha.";
+            }
+          }
+        },
+        { autoClose: 2000 }
+      );
+
+      setToken("");
+      setNewPassword("");
+      setConfirmPassword("");
+      onSuccess(); 
 
     } catch (error) {
-      const msg = error.response?.data?.error || "Erro ao resetar senha.";
-      toast.error(msg);
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -47,6 +65,6 @@ export function useResetPassword() {
     newPassRef,
     confirmPassRef,
     handleReset,
-    navigate 
+    isLoading
   };
 }

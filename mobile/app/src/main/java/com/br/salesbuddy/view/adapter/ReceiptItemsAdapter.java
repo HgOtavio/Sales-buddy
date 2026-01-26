@@ -32,7 +32,6 @@ public class ReceiptItemsAdapter extends RecyclerView.Adapter<ReceiptItemsAdapte
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         String itemText = items.get(position);
 
-        // Formata número com zero à esquerda (01, 02...)
         holder.tvItemIndex.setText(String.format(Locale.getDefault(), "%02d", position + 1));
         holder.tvItemName.setText(itemText);
     }

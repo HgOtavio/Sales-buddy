@@ -2,11 +2,13 @@ package com.br.salesbuddy.presenter;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log; // <-- IMPORT ADICIONADO PARA O DEBUG
 
 import com.br.salesbuddy.contract.ConfirmDataContract;
 import com.br.salesbuddy.model.SaleData;
 import com.br.salesbuddy.network.SalesService;
-import com.br.salesbuddy.utils.SalePersistence; // Importe a classe nova
+import com.br.salesbuddy.utils.SalePersistence;
+import com.google.gson.Gson; // <-- IMPORT ADICIONADO PARA O DEBUG
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,7 +20,7 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
 
     private final ConfirmDataContract.View view;
     private final SalesService service;
-    private SaleData currentSale; // Removi o 'final' para poder substituir
+    private SaleData currentSale;
     private final Context context;
 
     public ConfirmDataPresenter(ConfirmDataContract.View view, Context context) {
@@ -31,13 +33,12 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
     @Override
     public void loadInitialData(Bundle extras) {
         // --- MUDANÇA 1: Lógica de Recuperação (Recovery) ---
-        // Se extras for null ou incompleto, tentamos recuperar do Storage
         boolean isRecovery = false;
 
         if (extras == null || !extras.containsKey("VALOR_VENDA")) {
             SaleData savedSale = SalePersistence.getSavedSale(context);
             if (savedSale != null) {
-                this.currentSale = savedSale; // Restaura os dados salvos
+                this.currentSale = savedSale;
                 isRecovery = true;
             } else {
                 view.showError("Dados da venda não encontrados.");
@@ -45,7 +46,6 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
             }
         }
 
-        // Se NÃO for recuperação, carregamos do Bundle normalmente
         if (!isRecovery) {
             currentSale.userId = extras.getInt("ID_DO_LOJISTA", -1);
             currentSale.nome = extras.getString("NOME");
@@ -57,7 +57,6 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
             currentSale.item = rawItems;
 
             try {
-                // ... (Lógica de conversão de Double mantida igual ao anterior) ...
                 Object valVendaObj = extras.get("VALOR_VENDA");
                 if (valVendaObj instanceof Double) {
                     currentSale.valorVenda = (Double) valVendaObj;
@@ -82,11 +81,9 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
             }
         }
 
-        // --- EXIBIÇÃO ---
         updateView();
     }
 
-    // Extraí para um método auxiliar para reusar
     private void updateView() {
         double troco = currentSale.valorRecebido - currentSale.valorVenda;
         if (troco < 0) troco = 0.0;
@@ -128,12 +125,14 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
     public void confirmSale() {
         view.showLoading();
 
+
+
+
         service.sendSale(context, currentSale, new SalesService.SalesCallback() {
             @Override
             public void onSuccess(long idVenda) {
                 view.hideLoading();
 
-                // --- MUDANÇA 2: Sucesso! Limpa o backup ---
                 SalePersistence.clear(context);
 
                 view.showMessage("Venda Finalizada!");
@@ -157,15 +156,8 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
             public void onError(String message) {
                 view.hideLoading();
 
-                // --- MUDANÇA 3: Falha! Salva o backup ---
                 if (shouldSaveLocally(message)) {
-                    // Salva no LocalStorage
                     SalePersistence.saveSale(context, currentSale);
-
-                    // Avisa que salvou (opcional)
-                    // view.showMessage("Conexão perdida. Dados salvos localmente.");
-
-                    // Vai para a tela de erro
                     view.navigateToConnectionError();
                 } else {
                     view.showError(message);
@@ -178,14 +170,13 @@ public class ConfirmDataPresenter implements ConfirmDataContract.Presenter {
         if (msg == null) return false;
         String m = msg.toLowerCase();
 
-        // Verifica erro de rede OU erro 500 (Backend caiu)
         return m.contains("unable to resolve host") ||
                 m.contains("timeout") ||
                 m.contains("connect") ||
                 m.contains("network") ||
                 m.contains("socket") ||
-                m.contains("500") || // Internal Server Error
-                m.contains("502") || // Bad Gateway
-                m.contains("503");   // Service Unavailable
+                m.contains("500") ||
+                m.contains("502") ||
+                m.contains("503");
     }
 }

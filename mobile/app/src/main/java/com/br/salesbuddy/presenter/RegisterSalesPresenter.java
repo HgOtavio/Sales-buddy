@@ -22,21 +22,35 @@ public class RegisterSalesPresenter implements RegisterSalesContract.Presenter {
             return;
         }
 
+        //  Limpa as máscaras (tira R$ e pontos, e garante o ponto decimal)
+        String cleanValVenda = MaskUtils.unmaskMoney(valVenda).replace(",", ".");
+        String cleanValRecebido = MaskUtils.unmaskMoney(valRecebido).replace(",", ".");
 
-        String cleanValVenda = MaskUtils.unmaskMoney(valVenda);
-        String cleanValRecebido = MaskUtils.unmaskMoney(valRecebido);
+        // Converte para DOUBLE puro antes de empacotar
+        double dValVenda = 0.0;
+        double dValRecebido = 0.0;
+        try {
+            dValVenda = Double.parseDouble(cleanValVenda);
+            dValRecebido = Double.parseDouble(cleanValRecebido);
+        } catch (NumberFormatException e) {
+            view.showInputError("Erro ao processar valores. Verifique a digitação.");
+            return;
+        }
 
         Bundle bundle = new Bundle();
         bundle.putInt("ID_DO_LOJISTA", userId);
         bundle.putString("NOME", nome);
         bundle.putString("CPF", cpf);
         bundle.putString("EMAIL", email);
-        bundle.putString("ITEM", (itensConcatenados.isEmpty()) ? "Item Diverso" : itensConcatenados);
 
-        bundle.putString("VALOR_VENDA", cleanValVenda);
-        bundle.putString("VALOR_RECEBIDO", cleanValRecebido);
+        //  O nome da chave agora é "ITENS_CONCATENADOS" (o ConfirmData esperava isso)
+        bundle.putString("ITENS_CONCATENADOS", (itensConcatenados.isEmpty()) ? "Item Diverso" : itensConcatenados);
 
-        // 4. Navegar
+        //  Agora empacotamos como DOUBLE (putDouble em vez de putString)
+        bundle.putDouble("VALOR_VENDA", dValVenda);
+        bundle.putDouble("VALOR_RECEBIDO", dValRecebido);
+
+        //  Navegar
         view.navigateToConfirm(bundle);
     }
 }

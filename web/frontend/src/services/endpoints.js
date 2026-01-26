@@ -8,10 +8,10 @@ export const ENDPOINTS = {
     USERS: "/auth/users"                    
   },
   SALES: {
-    BASE: "/vendas",              
-    LIST: "/vendas/list",         
-    DETAILS: "/vendas/details",  
-    EMAIL: "/vendas/email",    
-    DOWNLOAD_PDF: "/vendas/download-pdf" 
+    BASE: "/sales",              
+    LIST: "/sales/list",         
+    DETAILS: "/sales/details",  
+    EMAIL: "/sales/email",    
+    DOWNLOAD_PDF: "/sales/download-pdf" 
   }
 };

@@ -1,9 +1,14 @@
 package com.br.salesbuddy.view;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.Network;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Html;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -12,6 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -25,6 +31,7 @@ import com.br.salesbuddy.R;
 import com.br.salesbuddy.contract.FinalizationContract;
 import com.br.salesbuddy.network.AuthService;
 import com.br.salesbuddy.presenter.FinalizationPresenter;
+import com.br.salesbuddy.utils.NetworkUtils;
 import com.br.salesbuddy.view.adapter.ReceiptItemsAdapter;
 
 import java.util.List;
@@ -40,6 +47,9 @@ public class FinalizationActivity extends AppCompatActivity implements Finalizat
     private FinalizationPresenter presenter;
     private AuthService authService;
     private int currentUserId;
+
+    private ConnectivityManager connectivityManager;
+    private ConnectivityManager.NetworkCallback networkCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,13 +70,36 @@ public class FinalizationActivity extends AppCompatActivity implements Finalizat
         }
 
         setupListeners();
+        setupNetworkListener();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (connectivityManager != null && networkCallback != null) {
+            connectivityManager.registerDefaultNetworkCallback(networkCallback);
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
+        if (!NetworkUtils.isConnected(this)) {
+            navigateToConnectionError();
+            return;
+        }
+
         if (authService != null) {
             authService.validateSession(this);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (connectivityManager != null && networkCallback != null) {
+            connectivityManager.unregisterNetworkCallback(networkCallback);
         }
     }
 
@@ -113,6 +146,18 @@ public class FinalizationActivity extends AppCompatActivity implements Finalizat
         btnNao.setOnClickListener(v -> presenter.onNewSaleClicked());
     }
 
+    private void setupNetworkListener() {
+        connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        networkCallback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onLost(@NonNull Network network) {
+                super.onLost(network);
+                runOnUiThread(() -> navigateToConnectionError());
+            }
+        };
+    }
+
     private void setupWindowInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -137,9 +182,32 @@ public class FinalizationActivity extends AppCompatActivity implements Finalizat
         tvVendaId.setText(saleId);
     }
 
+
+    private void showCustomToast(String message, boolean isSuccess) {
+        runOnUiThread(() -> {
+            LayoutInflater inflater = getLayoutInflater();
+            View layout = inflater.inflate(R.layout.custom_toast, findViewById(R.id.custom_toast_container));
+
+            TextView text = layout.findViewById(R.id.tvToastMessage);
+            text.setText(message);
+
+            // Troca o fundo dependendo se é sucesso ou erro
+            if (isSuccess) {
+                layout.setBackgroundResource(R.drawable.bg_toast_sucesso);
+            } else {
+                layout.setBackgroundResource(R.drawable.bg_toast_erro);
+            }
+
+            Toast toast = new Toast(getApplicationContext());
+            toast.setDuration(Toast.LENGTH_LONG);
+            toast.setView(layout);
+            toast.show();
+        });
+    }
+
     @Override
     public void showLoading(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        showCustomToast(message, true);
         btnSim.setEnabled(false);
         btnNao.setEnabled(false);
     }
@@ -152,12 +220,12 @@ public class FinalizationActivity extends AppCompatActivity implements Finalizat
 
     @Override
     public void showMessage(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+        showCustomToast(message, true);
     }
 
     @Override
     public void showError(String error) {
-        Toast.makeText(this, error, Toast.LENGTH_LONG).show();
+        showCustomToast(error, false);
     }
 
     @Override

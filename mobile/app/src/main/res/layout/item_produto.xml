@@ -34,7 +34,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_lista_border"
-            android:hint="NOME CLIENTE"
+            android:hint="01 ITEM"
             android:inputType="textCapSentences"
 
             android:textColor="#A32C65"

@@ -6,6 +6,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log; // <-- IMPORT DO LOG ADICIONADO
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.br.salesbuddy.R;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout; // Importante importar isso
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,21 +43,18 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
 
-        // --- LÓGICA DO HINT DINÂMICO (ITEM 01, ITEM 02...) ---
-        // Pega a posição (0, 1, 2), soma 1 e formata com dois dígitos
         String hintDinamico = String.format("ITEM %02d", position + 1);
-        holder.layoutItem.setHint(hintDinamico);
-        // -----------------------------------------------------
+        holder.etItem.setHint(hintDinamico);
 
-        // 1. Remove listener antigo
+        // Remove listener antigo
         if (holder.textWatcher != null) {
             holder.etItem.removeTextChangedListener(holder.textWatcher);
         }
 
-        // 2. Define texto
+        // Define texto
         holder.etItem.setText(items.get(position));
 
-        // 3. Novo listener para salvar texto
+        // Novo listener para salvar texto
         holder.textWatcher = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -66,6 +64,9 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
                 int currentPos = holder.getAdapterPosition();
                 if (currentPos != RecyclerView.NO_POSITION) {
                     items.set(currentPos, s.toString());
+
+                    // 🔥 DEBUG: Vendo o que está sendo digitado em tempo real
+                    Log.d("DEBUG_VENDA", "Item [" + (currentPos+1) + "] atualizado para: " + s.toString());
                 }
             }
 
@@ -74,7 +75,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         };
         holder.etItem.addTextChangedListener(holder.textWatcher);
 
-        // 4. Configura Botões
+        // Configura Botões
         setupButtonLogic(holder.btnAction, position, holder);
     }
 
@@ -104,12 +105,13 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
                 int currentPos = holder.getAdapterPosition();
 
                 if (currentPos != RecyclerView.NO_POSITION && items.size() > currentPos) {
+                    String removido = items.get(currentPos);
                     items.remove(currentPos);
 
-                    // Remove animação
+                    // 🔥 DEBUG: Vendo o que foi removido
+                    Log.d("DEBUG_VENDA", "Item removido: " + removido);
+
                     notifyItemRemoved(currentPos);
-
-
                     notifyItemRangeChanged(currentPos, items.size());
                 }
             });
@@ -121,6 +123,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         return items.size();
     }
 
+
     public String getItemsConcatenated() {
         StringBuilder builder = new StringBuilder();
         for (String item : items) {
@@ -131,11 +134,16 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
                 builder.append(item.trim());
             }
         }
-        return builder.toString();
+
+        String resultadoFinal = builder.toString();
+
+
+
+        return resultadoFinal;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        // Adicionamos o layoutItem aqui para poder mudar o Hint
+
         TextInputLayout layoutItem;
         TextInputEditText etItem;
         MaterialButton btnAction;
@@ -144,7 +152,6 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         @SuppressLint("WrongViewCast")
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            // Vincula o Layout do Texto
             layoutItem = itemView.findViewById(R.id.layoutItem);
             etItem = itemView.findViewById(R.id.etItem);
 

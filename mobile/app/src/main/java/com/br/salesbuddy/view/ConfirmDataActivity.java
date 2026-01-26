@@ -1,8 +1,12 @@
 package com.br.salesbuddy.view;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.Network;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -10,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -20,7 +25,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.br.salesbuddy.R;
 import com.br.salesbuddy.contract.ConfirmDataContract;
 import com.br.salesbuddy.presenter.ConfirmDataPresenter;
-import com.br.salesbuddy.view.adapter.ConfirmItemsAdapter; // Import do novo Adapter
+import com.br.salesbuddy.utils.NetworkUtils;
+import com.br.salesbuddy.view.adapter.ConfirmItemsAdapter;
 
 import java.util.List;
 
@@ -32,6 +38,9 @@ public class ConfirmDataActivity extends AppCompatActivity implements ConfirmDat
     private ImageView btnBack, btnMenu;
 
     private ConfirmDataPresenter presenter;
+
+    private ConnectivityManager connectivityManager;
+    private ConnectivityManager.NetworkCallback networkCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +58,31 @@ public class ConfirmDataActivity extends AppCompatActivity implements ConfirmDat
         }
 
         setupListeners();
+        setupNetworkListener();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (connectivityManager != null && networkCallback != null) {
+            connectivityManager.registerDefaultNetworkCallback(networkCallback);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!NetworkUtils.isConnected(this)) {
+            navigateToConnectionError();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (connectivityManager != null && networkCallback != null) {
+            connectivityManager.unregisterNetworkCallback(networkCallback);
+        }
     }
 
     private void initViews() {
@@ -56,7 +90,6 @@ public class ConfirmDataActivity extends AppCompatActivity implements ConfirmDat
         tvCpf = findViewById(R.id.tvResumoCpf);
         tvEmail = findViewById(R.id.tvResumoEmail);
 
-        // Configuração do RecyclerView
         rvItens = findViewById(R.id.rvResumoItens);
         rvItens.setLayoutManager(new LinearLayoutManager(this));
 
@@ -65,7 +98,7 @@ public class ConfirmDataActivity extends AppCompatActivity implements ConfirmDat
         tvTroco = findViewById(R.id.tvResumoTroco);
 
         btnConfirmar = findViewById(R.id.btnConfirmarEnvio);
-        btnAlterar = findViewById(R.id.btnConfirmarEnvio2); // Botão Alterar
+        btnAlterar = findViewById(R.id.btnConfirmarEnvio2);
         btnBack = findViewById(R.id.btn_back);
         btnMenu = findViewById(R.id.btn_menu);
     }
@@ -73,13 +106,10 @@ public class ConfirmDataActivity extends AppCompatActivity implements ConfirmDat
     private void setupListeners() {
         btnBack.setOnClickListener(v -> finish());
 
-        btnAlterar.setOnClickListener(v -> finish()); // Botão Alterar volta para editar
+        btnAlterar.setOnClickListener(v -> finish());
 
         btnConfirmar.setOnClickListener(v -> {
-            int idDoUsuario = getIntent().getIntExtra("ID_DO_LOJISTA", -1);
-
-            Log.d("DEBUG_VENDA", "CLICOU EM FINALIZAR! O ID DO USUÁRIO AQUI É: " + idDoUsuario);
-
+            // Segue o fluxo para o Presenter finalizar a venda
             presenter.confirmSale();
         });
 
@@ -90,6 +120,18 @@ public class ConfirmDataActivity extends AppCompatActivity implements ConfirmDat
         });
     }
 
+    private void setupNetworkListener() {
+        connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        networkCallback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onLost(@NonNull Network network) {
+                super.onLost(network);
+                runOnUiThread(() -> navigateToConnectionError());
+            }
+        };
+    }
+
     private void setupWindowInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -98,6 +140,26 @@ public class ConfirmDataActivity extends AppCompatActivity implements ConfirmDat
         });
     }
 
+    private void showCustomToast(String message, boolean isSuccess) {
+        runOnUiThread(() -> {
+            LayoutInflater inflater = getLayoutInflater();
+            View layout = inflater.inflate(R.layout.custom_toast, findViewById(R.id.custom_toast_container));
+
+            TextView text = layout.findViewById(R.id.tvToastMessage);
+            text.setText(message);
+
+            if (isSuccess) {
+                layout.setBackgroundResource(R.drawable.bg_toast_sucesso);
+            } else {
+                layout.setBackgroundResource(R.drawable.bg_toast_erro);
+            }
+
+            Toast toast = new Toast(getApplicationContext());
+            toast.setDuration(Toast.LENGTH_LONG);
+            toast.setView(layout);
+            toast.show();
+        });
+    }
 
     @Override
     public void showLoading() {
@@ -109,7 +171,6 @@ public class ConfirmDataActivity extends AppCompatActivity implements ConfirmDat
     public void hideLoading() {
         btnConfirmar.setEnabled(true);
         btnConfirmar.setText("FINALIZAR");
-
     }
 
     @Override
@@ -122,14 +183,13 @@ public class ConfirmDataActivity extends AppCompatActivity implements ConfirmDat
         tvRecebido.setText(valorRecebido);
         tvTroco.setText(troco);
 
-        // Configura o Adapter com a lista já processada pelo Presenter
         ConfirmItemsAdapter adapter = new ConfirmItemsAdapter(items);
         rvItens.setAdapter(adapter);
     }
 
     @Override
     public void showMessage(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+        showCustomToast(message, true);
     }
 
     @Override
@@ -140,17 +200,14 @@ public class ConfirmDataActivity extends AppCompatActivity implements ConfirmDat
 
     @Override
     public void showError(String error) {
-        runOnUiThread(() ->
-                Toast.makeText(this, error, Toast.LENGTH_LONG).show()
-        );
-        Log.e("SalesBuddy", "Erro: " + error);
+        showCustomToast(error, false);
+        Log.e("SalesBuddy", "Erro na API: " + error); // Mantido o log só para registro do dev
     }
 
     @Override
     public void navigateToFinalization(Bundle finalData) {
         Intent intent = new Intent(this, FinalizationActivity.class);
         intent.putExtras(finalData);
-        // Limpa a pilha para não voltar para o confirmar
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
         finish();

@@ -1,41 +1,58 @@
-import { useState, useRef } from "react";
+import React from "react";
+import { useResetPassword } from "../hooks/useResetPassword";
 
-export function ResetForm({ onReset, onBack }) {
-  const [data, setData] = useState({ token: "", newPassword: "", confirmPassword: "" });
-  const passRef = useRef(null);
-  const confirmRef = useRef(null);
-
-  const handleChange = (e) => setData({ ...data, [e.target.name]: e.target.value });
+export function ResetForm({ onBack }) {
+  // Passamos o onBack como o onSuccess do hook
+  const {
+    token, setToken,
+    newPassword, setNewPassword,
+    confirmPassword, setConfirmPassword,
+    newPassRef,
+    confirmPassRef,
+    handleReset,
+    isLoading
+  } = useResetPassword({ onSuccess: onBack });
 
   return (
     <>
-      <input 
-        name="token"
-        placeholder="COLE O TOKEN RECEBIDO" 
-        value={data.token} 
-        onChange={handleChange}
-        onKeyDown={e => e.key === "Enter" && passRef.current?.focus()}
+      <p style={{ color: 'white', marginBottom: '10px', fontSize: '0.9rem', textAlign: 'center' }}>
+        COLE O TOKEN RECEBIDO E DEFINA SUA SENHA
+      </p>
+
+      <input
+        type="text"
+        placeholder="COLE O TOKEN AQUI"
+        value={token}
+        onChange={(e) => setToken(e.target.value)}
+        disabled={isLoading}
+        onKeyDown={(e) => e.key === "Enter" && newPassRef.current?.focus()}
       />
-      <input 
-        name="newPassword"
-        type="password" 
-        placeholder="NOVA SENHA" 
-        ref={passRef}
-        value={data.newPassword} 
-        onChange={handleChange}
-        onKeyDown={e => e.key === "Enter" && confirmRef.current?.focus()}
+
+      <input
+        type="password"
+        placeholder="NOVA SENHA"
+        value={newPassword}
+        onChange={(e) => setNewPassword(e.target.value)}
+        ref={newPassRef}
+        disabled={isLoading}
+        onKeyDown={(e) => e.key === "Enter" && confirmPassRef.current?.focus()}
       />
-      <input 
-        name="confirmPassword"
-        type="password" 
-        placeholder="CONFIRME A SENHA" 
-        ref={confirmRef}
-        value={data.confirmPassword} 
-        onChange={handleChange}
-        onKeyDown={e => e.key === "Enter" && onReset(data)}
+
+      <input
+        type="password"
+        placeholder="CONFIRME A NOVA SENHA"
+        value={confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
+        ref={confirmPassRef}
+        disabled={isLoading}
+        onKeyDown={(e) => e.key === "Enter" && !isLoading && handleReset()}
       />
-      <button onClick={() => onReset(data)}>Definir Senha</button>
-      <a href="#" className="forgot" onClick={e => { e.preventDefault(); onBack(); }}>
+
+      <button onClick={handleReset} disabled={isLoading}>
+        {isLoading ? "Salvando..." : "Definir Senha"}
+      </button>
+
+      <a href="#" onClick={(e) => { e.preventDefault(); onBack(); }} className="forgot">
         Voltar para o Login
       </a>
     </>

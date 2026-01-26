@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
@@ -34,7 +35,7 @@ exports.registerUser = async ({ name, user, company, email, taxId }) => {
         if (companyByName) {
             throw { 
                 status: 409, 
-                message: `O nome de empresa "${company}" já está cadastrado no sistema (com outro CNPJ). Use um nome diferente (ex: ${company} Filial).` 
+                message: `O nome de empresa "${company}" já está cadastrado no sistema (com outro CNPJ). Use um nome diferente.` 
             };
         }
         companyRecord = await Company.create({
@@ -69,7 +70,7 @@ exports.registerUser = async ({ name, user, company, email, taxId }) => {
     await newUser.save();
 
     emailService.sendWelcomeTokenEmail(email, user, activationToken)
-        .catch(err => console.error(" Erro ao enviar e-mail de boas-vindas (Background):", err));
+        .catch(err => console.error(err));
 
     return { message: "Cadastro realizado com sucesso! Um convite foi enviado para o e-mail." };
 };
@@ -80,7 +81,6 @@ exports.updateUser = async (targetId, requesterId, data) => {
     const targetUser = await User.findByPk(targetId, { include: Company });
     if (!targetUser) throw { status: 404, message: `Usuário com ID ${targetId} não encontrado.` };
 
-    // 1. Atualização de Empresa (Restrito ao Dono)
     if (company || taxId) {
         const ownerUser = await User.findOne({
             where: { companyId: targetUser.companyId },
@@ -112,19 +112,16 @@ exports.updateUser = async (targetId, requesterId, data) => {
         await userCompany.save();
     }
 
-    // 2. Validação de E-mail Duplicado (O FIX DO ERRO ANTERIOR)
     if (email && email !== targetUser.email) {
         if (!isValidEmail(email)) throw { status: 400, message: "Novo e-mail inválido." };
 
         const emailExists = await User.findOne({ where: { email } });
-        // Se existe alguém com esse email E não é o usuário atual
         if (emailExists && emailExists.id !== targetUser.id) {
             throw { status: 409, message: "Este e-mail já está em uso por outro usuário." };
         }
         targetUser.email = email;
     }
 
-    // 3. Validação de Username Duplicado
     if (user && user !== targetUser.user) {
         const userExists = await User.findOne({ where: { user } });
         if (userExists && userExists.id !== targetUser.id) {
@@ -161,12 +158,10 @@ exports.authenticateUser = async (username, password) => {
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
     
-    // Retorna apenas o token (o front decodifica)
     return { token };
 };
 
 exports.deleteUser = async (targetId, requesterId) => {
-    // Impede suicídio da conta (opcional, mas recomendado)
     if (requesterId && String(requesterId) === String(targetId)) {
         throw { status: 403, message: "Você não pode deletar sua própria conta." };
     }
@@ -203,17 +198,25 @@ exports.forgotPassword = async (email) => {
         throw { status: 404, message: "Nenhum usuário encontrado com este e-mail." };
     }
 
-    if (!process.env.JWT_SECRET) {
-        throw { status: 500, message: "Erro de configuração no servidor (JWT_SECRET)." };
+    const now = Date.now();
+
+    if (targetUser.resetToken && targetUser.resetTokenExpires > now) {
+        const timeLeft = Math.ceil((targetUser.resetTokenExpires - now) / 60000); 
+        throw { 
+            status: 429, 
+            message: `Você já solicitou a recuperação de senha. Aguarde ${timeLeft} minuto(s) para tentar novamente.` 
+        };
     }
 
-    const resetToken = jwt.sign(
-        { id: targetUser.id, purpose: 'password_reset' }, 
-        process.env.JWT_SECRET
-    );
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiry = now + (15 * 60 * 1000); 
+
+    targetUser.resetToken = resetToken;
+    targetUser.resetTokenExpires = expiry;
+    await targetUser.save();
 
     emailService.sendResetTokenEmail(email, resetToken)
-        .catch(err => console.error(" Erro ao enviar e-mail de reset (Background):", err));
+        .catch(err => console.error(err));
 
     return { message: "Token de recuperação enviado para o e-mail." };
 };
@@ -223,20 +226,19 @@ exports.resetPassword = async (token, newPassword, confirmPassword) => {
         throw { status: 400, message: "A nova senha e a confirmação não coincidem." };
     }
 
-    let decoded;
-    try {
-        decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (err) {
-        throw { status: 401, message: "Token inválido ou expirado." };
-    }
-    
-    const targetUser = await User.findByPk(decoded.id);
+    const targetUser = await User.findOne({ where: { resetToken: token } });
     if (!targetUser) {
-        throw { status: 404, message: "Usuário não encontrado." };
+        throw { status: 400, message: "Token inválido ou não encontrado." };
+    }
+
+    if (targetUser.resetTokenExpires < Date.now()) {
+        throw { status: 400, message: "Este link expirou. Por favor, solicite um novo." };
     }
 
     const salt = await bcrypt.genSalt(10);
     targetUser.password = await bcrypt.hash(newPassword, salt);
+    targetUser.resetToken = null;
+    targetUser.resetTokenExpires = null;
     
     await targetUser.save();
     return { message: "Senha atualizada com sucesso! Agora você pode fazer login." };

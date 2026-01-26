@@ -4,7 +4,10 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -30,20 +33,43 @@ public class ConnectionErrorActivity extends AppCompatActivity {
         btnRetry = findViewById(R.id.btn_retry);
         btnClose = findViewById(R.id.btn_close);
 
-        // Ação do botão Tentar Novamente
+
         btnRetry.setOnClickListener(v -> {
             if (isNetworkAvailable()) {
 
-                Toast.makeText(this, "Conexão restabelecida!", Toast.LENGTH_SHORT).show();
+                showCustomToast("Conexão restabelecida!", true);
                 finish();
             } else {
-                Toast.makeText(this, "Ainda sem conexão. Verifique sua internet.", Toast.LENGTH_SHORT).show();
+
+                showCustomToast("Ainda sem conexão. Verifique sua internet.", false);
             }
         });
 
+        // Ação do botão Fechar
         btnClose.setOnClickListener(v -> finish());
     }
 
+
+    private void showCustomToast(String message, boolean isSuccess) {
+        runOnUiThread(() -> {
+            LayoutInflater inflater = getLayoutInflater();
+            View layout = inflater.inflate(R.layout.custom_toast, findViewById(R.id.custom_toast_container));
+
+            TextView text = layout.findViewById(R.id.tvToastMessage);
+            text.setText(message);
+
+            if (isSuccess) {
+                layout.setBackgroundResource(R.drawable.bg_toast_sucesso);
+            } else {
+                layout.setBackgroundResource(R.drawable.bg_toast_erro);
+            }
+
+            Toast toast = new Toast(getApplicationContext());
+            toast.setDuration(Toast.LENGTH_LONG);
+            toast.setView(layout);
+            toast.show();
+        });
+    }
 
     private boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager

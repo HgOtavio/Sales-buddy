@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
-import { ENDPOINTS } from "../services/endpoints"; // <--- Importando seus Endpoints
+import { ENDPOINTS } from "../services/endpoints"; 
 import receiptIcon from "../assets/icon-sales.svg";
 
 const formatCurrency = (value) => {
@@ -22,13 +22,19 @@ export function SalesTable({ onViewReceipt }) {
   useEffect(() => {
     async function fetchSales() {
       try {
-  
+      
         const response = await api.get(ENDPOINTS.SALES.BASE); 
         
-        setVendas(response.data);
-        console.log("Vendas carregadas:", response.data);
+        
+        const dadosReais = Array.isArray(response.data) 
+            ? response.data 
+            : (response.data.vendas || response.data.data || []);
+        
+        setVendas(dadosReais);
+        console.log("Vendas corrigidas e carregadas:", dadosReais);
+
       } catch (error) {
-        console.error("Erro ao buscar vendas", error);
+        console.error("Erro ao buscar vendas:", error.response?.data || error.message);
       } finally {
         setLoading(false);
       }

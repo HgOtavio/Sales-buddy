@@ -5,22 +5,35 @@ public class SaleData {
     public String nome;          // Vai para o TextView do Nome do Cliente
     public String cpf;
     public String email;
+
+    // INTOCADO: A sua variável item continua aqui exatamente igual
     public String item;
+
     public double valorVenda;    // Vai para o TextView do Valor Total
     public double valorRecebido;
 
-    // --- Campos adicionais necessários para o Layout que criamos ---
-    public String dataVenda;     // Ex: "19/01/2026 - 14:30"
-    public boolean pendente;     // Se true = cor de erro, false = cor normal
+    public String dataVenda;
+    public boolean pendente;
 
-    // Construtor vazio
     public SaleData() {}
 
-    // Construtor utilitário para facilitar testes no Presenter
     public SaleData(String nome, double valorVenda, String dataVenda, boolean pendente) {
         this.nome = nome;
         this.valorVenda = valorVenda;
         this.dataVenda = dataVenda;
         this.pendente = pendente;
+    }
+
+
+    public static class ItemVenda {
+        public String productName;
+        public double quantity;
+        public double unitPrice;
+
+        public ItemVenda(String productName, double quantity, double unitPrice) {
+            this.productName = productName;
+            this.quantity = quantity;
+            this.unitPrice = unitPrice;
+        }
     }
 }
