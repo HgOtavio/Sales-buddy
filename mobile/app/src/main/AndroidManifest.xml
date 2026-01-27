@@ -13,40 +13,40 @@
         android:usesCleartextTraffic="true">
 
         <activity
-            android:name=".view.MenuBottomSheetActivity"
+            android:name=".view.activity.menu.MenuBottomSheetActivity"
             android:exported="false"
             tools:ignore="Instantiatable" />
         <activity
-            android:name=".view.ConnectionErrorActivity"
+            android:name=".view.activity.common.ConnectionErrorActivity"
             android:exported="false" />
 
         <activity
-            android:name=".view.ReprocessingActivity"
+            android:name=".view.activity.reprocessing.ReprocessingActivity"
             android:exported="false" />
 
         <activity
-            android:name=".view.FinalizationActivity"
+            android:name=".view.activity.sales.FinalizationActivity"
             android:exported="false" />
 
         <activity
-            android:name=".view.ConfirmDataActivity"
+            android:name=".view.activity.sales.ConfirmDataActivity"
             android:exported="false" />
 
         <activity
-            android:name=".view.RegisterSalesActivity"
+            android:name=".view.activity.sales.RegisterSalesActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".view.HomeActivity"
+            android:name=".view.activity.home.HomeActivity"
             android:exported="false" />
 
         <activity
-            android:name=".view.AuthenticationActivity"
+            android:name=".view.activity.auth.AuthenticationActivity"
             android:exported="false" />
 
         <activity
-            android:name=".view.SplashActivity"
+            android:name=".view.activity.splash.SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

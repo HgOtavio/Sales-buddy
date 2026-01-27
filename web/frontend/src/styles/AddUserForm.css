@@ -1,12 +1,10 @@
-/* --- CSS ORIGINAL (BASE DESKTOP) --- */
-
 .add-user-container {
   width: 100%;
   max-width: 800px; 
-  margin: 0 auto; /* Adicionei 'auto' para centralizar na tela se sobrar espaço */
+  margin: 0 auto; 
   font-family: "Montserrat", sans-serif;
   padding-top: 20px;
-  box-sizing: border-box; /* Garante que padding não estoure a largura */
+  box-sizing: border-box;
 }
 
 .add-user-header {
@@ -15,7 +13,7 @@
   gap: 15px; 
   margin-bottom: 40px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #eee; /* Opcional: separação visual */
+  border-bottom: 1px solid #eee; 
 }
 
 .header-icon {
@@ -43,7 +41,7 @@
   font-weight: 600;
   text-transform: uppercase;
   
-  width: 150px; /* Largura fixa no desktop */
+  width: 150px; 
   text-align: left; 
   margin-right: 20px; 
   flex-shrink: 0; 
@@ -60,8 +58,8 @@
   outline: none;
   box-shadow: 0px 2px 5px rgba(0,0,0,0.05);
   
-  flex: 1; /* Ocupa o resto do espaço no desktop */
-  width: 100%; /* Garante segurança */
+  flex: 1;
+  width: 100%;
 }
 
 .form-input:focus {
@@ -69,8 +67,6 @@
 }
 
 
-/* --- RESPONSIVIDADE (MOBILE / TABLET) --- */
-/* Aplica essas regras quando a tela for menor que 768px */
 
 @media (max-width: 768px) {
   
@@ -80,22 +76,22 @@
   }
 
   .form-group {
-    flex-direction: column; /* Muda de lado-a-lado para coluna (um em cima do outro) */
-    align-items: flex-start; /* Alinha tudo à esquerda */
+    flex-direction: column; 
+    align-items: flex-start; 
   }
 
   .form-label {
-    width: 100%;        /* Ocupa a largura total */
-    margin-right: 0;    /* Remove a margem lateral */
-    margin-bottom: 8px; /* Adiciona espaço entre o label e o input */
+    width: 100%;      
+    margin-right: 0;   
+    margin-bottom: 8px; 
   }
 
   .form-input {
-    width: 100%;       /* Input ocupa a largura total disponível */
-    box-sizing: border-box; /* Impede que o padding aumente a largura além de 100% */
+    width: 100%;       
+    box-sizing: border-box; 
   }
 
   .add-user-title {
-    font-size: 20px; /* Diminui um pouco o título no mobile */
+    font-size: 20px; 
   }
 }

@@ -1,6 +1,6 @@
 import { toast } from 'react-toastify';
-import api from "../services/api";
-import { ENDPOINTS } from "../services/endpoints"; 
+import { UserService } from "../services/UserService"; // <--- Usa o Service
+import { toCreateUserRequest, toUpdateUserRequest } from "../dtos/userDTO"; // <--- Usa o Mapper
 
 export function useFloatingActions(setActive, refreshUsers, editingUser, activeTab) {
   
@@ -13,27 +13,19 @@ export function useFloatingActions(setActive, refreshUsers, editingUser, activeT
     try {
       
       if (editingUser) {
-        const payload = {
-            id: formData.id,  
-            name: formData.name,
-            email: formData.email,
-            user: formData.user || formData.username,
-        };
-
-        await api.put(ENDPOINTS.AUTH.USERS, payload);
+        // 1. Usa o DTO para limpar os dados
+        const payload = toUpdateUserRequest(formData);
+        
+        // 2. Chama o Service
+        await UserService.update(payload);
         toast.success("Usuário atualizado com sucesso!");
 
       } else {
-        const payload = {
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
-            company: formData.company,
-            user: formData.user || formData.username, 
-            taxId: formData.taxId || formData.cnpj
-        };
-
-        await api.post(ENDPOINTS.AUTH.REGISTER, payload);
+        // 1. Usa o DTO para limpar os dados
+        const payload = toCreateUserRequest(formData);
+        
+        // 2. Chama o Service
+        await UserService.register(payload);
         toast.success("Usuário cadastrado com sucesso! Verifique o e-mail.");
       }
 
@@ -41,15 +33,13 @@ export function useFloatingActions(setActive, refreshUsers, editingUser, activeT
       refreshUsers();
 
     } catch (error) {
+      // Dica: Você pode criar um utils/errorHandler.js para limpar isso também
       const title = error.response?.data?.error || "Erro";
       const detail = error.response?.data?.message || "";
-      
       toast.error(detail ? `${title}: ${detail}` : title);
-      console.error("Erro na requisição:", error.response?.data);
     }
   }
 
- 
   async function handleResetPassword() {
     if (!editingUser?.email) {
       toast.error("E-mail do usuário não identificado.");
@@ -57,18 +47,11 @@ export function useFloatingActions(setActive, refreshUsers, editingUser, activeT
     }
 
     try {
-     
-      console.log("Enviando solicitação de reset...");
-      
-      await api.post(ENDPOINTS.AUTH.FORGOT_PASSWORD, { 
-          email: editingUser.email 
-      });
-      
-     
+      // Chamada limpa via Service
+      await UserService.resetPassword(editingUser.email);
       toast.success("E-mail de recuperação enviado com sucesso!");
 
     } catch (error) {
-      console.error("Erro ao resetar senha:", error.response || error);
       const msg = error.response?.data?.message || "Erro ao solicitar reset.";
       toast.error(msg);
     }
@@ -78,7 +61,7 @@ export function useFloatingActions(setActive, refreshUsers, editingUser, activeT
 
   return {
     handleGoToAdd,
-    handleFormSubmit,   
+    handleFormSubmit,    
     handleResetPassword,
     isAddDisabled 
   };

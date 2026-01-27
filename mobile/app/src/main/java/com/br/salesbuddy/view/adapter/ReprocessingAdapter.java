@@ -1,5 +1,6 @@
 package com.br.salesbuddy.view.adapter;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,7 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.br.salesbuddy.R;
-import com.br.salesbuddy.model.ReprocessSaleData;
+import com.br.salesbuddy.model.body.ReprocessSaleData;
 
 import java.util.List;
 import java.util.Locale;
@@ -17,9 +18,15 @@ public class ReprocessingAdapter extends RecyclerView.Adapter<ReprocessingAdapte
 
     private final List<ReprocessSaleData> items;
 
-    // Removemos o Listener, pois o clique agora é no botão da tela pai
     public ReprocessingAdapter(List<ReprocessSaleData> items) {
         this.items = items;
+    }
+
+    public void markAsProcessed(int position) {
+        if (position >= 0 && position < items.size()) {
+            items.get(position).setProcessed(true);
+            notifyItemChanged(position);
+        }
     }
 
     public void clearList() {
@@ -30,6 +37,7 @@ public class ReprocessingAdapter extends RecyclerView.Adapter<ReprocessingAdapte
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // AQUI ELE CHAMA SEU XML "item_reprocess_sale"
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_reprocess_sale, parent, false);
         return new ViewHolder(view);
@@ -40,8 +48,13 @@ public class ReprocessingAdapter extends RecyclerView.Adapter<ReprocessingAdapte
         ReprocessSaleData item = items.get(position);
 
         holder.tvClientName.setText(item.getClientName());
-        // Ajuste conforme seu XML (se removeu o tv_error_reason, remova aqui tbm)
         holder.tvValue.setText(String.format(Locale.getDefault(), "R$ %.2f", item.getSaleValue()));
+
+        if (item.isProcessed()) {
+            holder.statusIndicator.setBackgroundColor(Color.parseColor("#B0B0B0"));
+        } else {
+            holder.statusIndicator.setBackgroundColor(Color.parseColor("#A32C65"));
+        }
     }
 
     @Override
@@ -51,11 +64,14 @@ public class ReprocessingAdapter extends RecyclerView.Adapter<ReprocessingAdapte
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvClientName, tvValue;
+        View statusIndicator;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+            // LIGANDO OS IDS DO SEU XML AO CÓDIGO JAVA
             tvClientName = itemView.findViewById(R.id.tv_client_name);
             tvValue = itemView.findViewById(R.id.tv_total_value);
+            statusIndicator = itemView.findViewById(R.id.view_status_indicator);
         }
     }
 }

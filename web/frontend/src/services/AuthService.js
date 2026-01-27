@@ -1,51 +1,62 @@
 import api from './api'; 
-import { jwtDecode } from "jwt-decode"; 
 import { ENDPOINTS } from "./endpoints"; 
+import { SessionManager } from "../utils/SessionManager"; // <--- Importamos o arquivo novo
 
 const AuthService = {
+  
+  // Mantive (user, password) para não quebrar seu Hook atual
   login: async (user, password) => {
     try {
-      
-
+      // 1. Chama a API
       const response = await api.post(ENDPOINTS.AUTH.LOGIN, {
         user: user,
         password: password
       });
 
-      console.log("3. Resposta recebida do servidor:", response);
+      console.log("Resposta recebida:", response);
 
+      // 2. Se a API mandou token, o SessionManager cuida de salvar
       if (response.data.token) {
-        localStorage.setItem("salesToken", response.data.token);
-        
-        try {
-            const userData = jwtDecode(response.data.token);
-            localStorage.setItem("userData", JSON.stringify(userData));
-        } catch (decodeError) {
-            console.error("ERRO AO DECODIFICAR TOKEN:", decodeError);
-        }
+        SessionManager.saveSession(response.data.token);
       } else {
-        console.warn(" O servidor respondeu, mas não mandou token!");
+        console.warn("Servidor não enviou token!");
       }
 
       return response.data;
       
     } catch (error) {
-      console.error(" ERRO FATAL NO AUTHSERVICE:", error);
+      console.error("Erro no Login:", error);
       throw error;
     }
   },
 
   logout: () => {
-    localStorage.removeItem("salesToken");
-    localStorage.removeItem("userData");
+    // 1. SessionManager limpa os dados
+    SessionManager.clearSession();
+    // 2. Redireciona
     window.location.href = "/login";
   },
 
   getCurrentUser: () => {
-    const userStr = localStorage.getItem("userData");
-    if (userStr) return JSON.parse(userStr);
-    return null;
-  }
+    // Busca do SessionManager
+    return SessionManager.getUser();
+  },
+
+resetPasswordConfirm: (payload) => {
+    return api.post(ENDPOINTS.AUTH.RESET_PASSWORD, payload);
+  },
+
+
+
+
+
+  forgotPassword: async (payload) => {
+    return await api.post(ENDPOINTS.AUTH.FORGOT_PASSWORD, payload);
+  },
+
+ 
 };
+
+
 
 export default AuthService;

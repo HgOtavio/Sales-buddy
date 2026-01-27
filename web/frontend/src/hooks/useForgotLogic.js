@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
-import api from "../services/api"; 
-import { ENDPOINTS } from "../services/endpoints"; 
+import AuthService from "../services/AuthService"; // <--- Importa o Service
+import { toForgotPasswordRequest } from "../dtos/authDTO"; // <--- Importa o DTO
 
 export function useForgotLogic({ onSuccess }) {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,15 +15,19 @@ export function useForgotLogic({ onSuccess }) {
     setIsLoading(true);
 
     try {
-     
-      const response = await api.post(ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
+      
+      // 1. DTO: Prepara e limpa o dado
+      const payload = toForgotPasswordRequest(email);
 
-     
+      // 2. SERVICE: Envia para a API
+      const response = await AuthService.forgotPassword(payload);
+      
+      // 3. HOOK: Sucesso visual
       toast.success(response.data.message || "Token enviado! Verifique sua caixa de entrada.");
-      onSuccess(); 
+      if (onSuccess) onSuccess(); 
       
     } catch (error) {
-   
+      // 4. HOOK: Tratamento de erro visual
       const errorMessage = error.response?.data?.message || "E-mail não encontrado ou erro no servidor.";
       toast.error(errorMessage);
     } finally {

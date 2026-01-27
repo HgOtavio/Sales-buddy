@@ -1,21 +1,21 @@
-import { useState, useEffect, useCallback } from "react"; // <-- useCallback adicionado
+import { useState, useEffect, useCallback } from "react"; 
 import { useNavigate } from "react-router-dom";
 import "../styles/dashboard.css";
 
 import { useUsers } from "../hooks/useUsers";
 import { useFloatingActions } from "../hooks/useFloatingActions"; 
 import api from "../services/api"; 
-import { ENDPOINTS } from "../services/endpoints"; // <--- ADICIONE ESTA LINHA
+import { ENDPOINTS } from "../services/endpoints"; 
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-import { UsersTable } from "../components/UsersTable";
-import { SalesTable } from "../components/salesTable"; 
-import { AddUserForm } from "../components/AddUserForm"; 
-import { SidebarItem } from "../components/SidebarItem";
-import { FloatingButtons } from "../components/FloatingButtons";
-import { ConfirmationModal } from "./ConfirmationModal";
+import { UsersTable } from "../components/tables/UsersTable";
+import { SalesTable } from "../components/tables/salesTable"; 
+import { AddUserForm } from "../components/forms/AddUserForm"; 
+import { SidebarItem } from "../components/layout/SidebarItem";
+import { FloatingButtons } from "../components/common/FloatingButtons";
+import { ConfirmationModal } from "../components/common/ConfirmationModal";
 
 import logo from "../assets/logo.svg";
 import usersIcon from "../assets/icon-users.svg";
@@ -69,9 +69,7 @@ export default function Dashboard() {
 
       try {
         await api.get(ENDPOINTS.AUTH.VERIFY); 
-
         setIsLoading(false);
-
       } catch {
         performLogout(); 
       }
@@ -140,6 +138,8 @@ export default function Dashboard() {
       </aside>
 
       <main className="content">
+        
+        {/* --- AQUI ESTÁ A DIV CONTAINER (VOLTOU PARA CÁ) --- */}
         <div className="table-container">
           
           {active === "usuarios" && (
@@ -162,8 +162,9 @@ export default function Dashboard() {
                 formId="user-form-id"
             />
           )}
-
+          
         </div>
+        {/* --- FIM DA DIV CONTAINER --- */}
 
         <FloatingButtons 
           activeTab={active} 

@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context=".view.FinalizationActivity">
+    tools:context=".view.activity.sales.FinalizationActivity">
 
     <ImageView
         android:id="@+id/iv_background"
@@ -24,7 +24,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp"
-        android:layout_marginTop="1dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -76,7 +75,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:fillViewport="true"
-            android:scrollbars="none">
+            android:scrollbars="none"
+            android:overScrollMode="never">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -243,6 +243,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:nestedScrollingEnabled="false"
+                            android:overScrollMode="never"
                             tools:listitem="@layout/item_receipt_product"
                             tools:itemCount="3"/>
 
@@ -375,7 +376,7 @@
                         android:layout_height="64dp"
                         android:text="SIM"
                         android:textColor="#FFFFFF"
-                        android:textSize="15dp"
+                        android:textSize="15sp"
                         android:textStyle="bold"
                         app:backgroundTint="#408140"
                         app:cornerRadius="6dp"
@@ -393,7 +394,7 @@
                         android:layout_height="64dp"
                         android:text="NÃO"
                         android:textColor="#FFFFFF"
-                        android:textSize="15dp"
+                        android:textSize="15sp"
                         android:textStyle="bold"
                         app:backgroundTint="#A32C2C"
                         app:cornerRadius="6dp"

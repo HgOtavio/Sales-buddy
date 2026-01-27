@@ -1,9 +1,9 @@
-/* --- CÓDIGO ORIGINAL (MANTIDO INTACTO) --- */
 table {
   width: 95%; 
   margin-left: 1px; 
   border-collapse: collapse;
   table-layout: fixed; 
+  /* Removemos scroll daqui, pois agora é o container que rola */
 }
 
 thead th {
@@ -25,82 +25,53 @@ tbody td {
   font-size: 13px; 
 }
 
-/* Larguras originais para Desktop */
+/* Colunas Desktop */
 th:nth-child(1), td:nth-child(1) { width: 5%; }
 th:nth-child(2), td:nth-child(2) { width: 15%; padding-right: 15px; }
 th:nth-child(3), td:nth-child(3) { width: 15%; padding-right: 15px; }
 th:nth-child(4), td:nth-child(4) { width: 15%; padding-right: 15px; }
 th:nth-child(5), td:nth-child(5) { width: 15%; }
 
-.td-user {
-  color: #074a82;
-  font-weight: 500;
-}
-
-.td-data {
-  color: #a32c65;
-}
-
-.edit-icon {
-  width: 18px;
-  cursor: pointer;
-  padding-right: 100%;
-}
+.td-user { color: #074a82; font-weight: 500; }
+.td-data { color: #a32c65; }
+.edit-icon { width: 18px; cursor: pointer; padding-right: 100%; }
 
 .status-box {
-  width: 16px;
-  height: 16px;
-  border: 1px solid #B0B0B0; 
-  border-radius: 4px;
-  background-color: transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
+  width: 16px; height: 16px; border: 1px solid #B0B0B0; 
+  border-radius: 4px; background-color: transparent; 
+  cursor: pointer; display: flex; align-items: center; 
+  justify-content: center; transition: all 0.2s ease;
 }
 
-.box-active {
-  background-color: #707070; 
-  border-color: #707070;
-}
-
+.box-active { background-color: #707070; border-color: #707070; }
 .box-active::after {
-  content: '';
-  width: 4px;
-  height: 8px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-  margin-bottom: 2px;
+  content: ''; width: 4px; height: 8px; border: solid white;
+  border-width: 0 2px 2px 0; transform: rotate(45deg); margin-bottom: 2px;
 }
 
-/* =======================================================
-   RESPONSIVIDADE (ADICIONADO NO FINAL)
-   Isso garante que a tabela não quebre no celular
-   ======================================================= */
-
+/* --- RESPONSIVIDADE (A Mágica acontece aqui) --- */
 @media (max-width: 768px) {
   table {
-    display: block;      /* Permite rolagem na própria tabela */
-    overflow-x: auto;    /* Ativa rolagem horizontal */
-    white-space: nowrap; /* Mantém linhas retas */
-    table-layout: auto;  /* Destrava a largura das colunas */
+    /* REMOVIDO: display: block e overflow-x: auto daqui! */
+    display: table; 
+    table-layout: auto; 
     width: 100%;
+    
+    /* SEGREDINHO: Força a tabela a ser maior que a tela do celular.
+       Isso faz o container (.table-container) ativar o scroll. */
+    min-width: 600px; 
   }
 
-  /* Remove as larguras fixas (%) no celular para o texto caber */
   th:nth-child(n), 
   td:nth-child(n) {
-    width: auto;         /* Largura automática baseada no texto */
-    min-width: 120px;    /* Garante um tamanho mínimo para leitura */
-    padding-right: 20px; /* Espaço seguro entre colunas */
+    width: auto;        
+    padding-right: 20px; 
+    white-space: normal; /* Permite quebra de linha se necessário */
   }
 
-  /* Ajuste específico para a coluna do checkbox (primeira) */
   th:nth-child(1), 
   td:nth-child(1) {
-    min-width: 40px;     /* Checkbox não precisa ser largo */
+    min-width: 40px;    
     width: 40px;
   }
 }

@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context=".view.RegisterSalesActivity">
+    tools:context=".view.activity.sales.RegisterSalesActivity">
 
     <ImageView
         android:id="@+id/iv_background"

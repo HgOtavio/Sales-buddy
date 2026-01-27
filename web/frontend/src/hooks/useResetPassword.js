@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { toast } from 'react-toastify';
-import api from "../services/api"; 
-import { ENDPOINTS } from "../services/endpoints"; 
+import AuthService from "../services/AuthService"; // <--- Service
+import { toResetPasswordRequest } from "../dtos/authDTO"; // <--- DTO
 
 export function useResetPassword({ onSuccess }) {
   const [token, setToken] = useState("");
@@ -13,6 +13,7 @@ export function useResetPassword({ onSuccess }) {
   const confirmPassRef = useRef(null);
 
   async function handleReset() {
+    // 1. Validação de UI
     if (!token || !newPassword || !confirmPassword) {
       toast.warning("Preencha todos os campos.");
       return;
@@ -25,20 +26,22 @@ export function useResetPassword({ onSuccess }) {
 
     setIsLoading(true);
 
-    const request = api.post(ENDPOINTS.AUTH.RESET_PASSWORD, {
-      token,
-      newPassword,
-      confirmPassword
-    });
-
     try {
+      // 2. DTO: Prepara os dados (limpa token e remove confirmPassword)
+      const payload = toResetPasswordRequest(token, newPassword);
+
+      // 3. SERVICE: Prepara a chamada (mas não espera ainda, pq o toast.promise precisa da Promise)
+      const apiCallPromise = AuthService.resetPasswordConfirm(payload);
+
+      // 4. UI: Gerencia o feedback com Toast Promise
       await toast.promise(
-        request,
+        apiCallPromise,
         {
           pending: "Redefinindo senha...",
           success: "Senha definida com sucesso! Faça seu login.",
           error: {
             render({ data }) {
+              // Pega a mensagem de erro que vem do axios
               return data.response?.data?.error || "Erro ao resetar senha.";
             }
           }
@@ -46,13 +49,15 @@ export function useResetPassword({ onSuccess }) {
         { autoClose: 2000 }
       );
 
+      // 5. Limpeza pós-sucesso
       setToken("");
       setNewPassword("");
       setConfirmPassword("");
-      onSuccess(); 
+      if (onSuccess) onSuccess(); 
 
     } catch (error) {
-      console.error(error);
+      console.error("Erro no fluxo de reset:", error);
+      // O toast.promise já exibiu o erro visualmente, aqui é só log
     } finally {
       setIsLoading(false);
     }

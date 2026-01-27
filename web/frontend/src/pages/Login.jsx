@@ -1,7 +1,7 @@
 import { useLoginLogic } from "../hooks/useLoginLogic";
-import { LoginForm } from "../components/LoginForm";
-import { ForgotForm } from "../components/ForgotForm"; 
-import { ResetForm } from "../components/ResetForm";
+import { LoginForm } from "../components/forms/LoginForm";
+import { ForgotForm } from "../components/forms/ForgotForm"; 
+import { ResetForm } from "../components/forms/ResetForm";
 import { ToastContainer } from 'react-toastify';
 import logo from "../assets/logo.svg";
 import background from "../assets/background.png";

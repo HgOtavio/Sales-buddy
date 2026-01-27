@@ -1,10 +1,9 @@
-export default class LoginDTO {
-  constructor(email, password) {
-    if (!email || !password) {
-      throw new Error("Usuário e senha são obrigatórios");
-    }
+// src/dtos/loginDTO.js
 
-    this.email = email;
-    this.password = password;
-  }
-}
+export const toLoginRequest = (userOrEmail, password) => {
+    return {
+        // Regra: backend espera "user", mas removemos espaços extras
+        user: userOrEmail ? userOrEmail.trim() : "", 
+        password: password
+    };
+};
